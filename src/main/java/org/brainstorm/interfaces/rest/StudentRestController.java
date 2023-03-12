@@ -1,5 +1,6 @@
 package org.brainstorm.interfaces.rest;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import org.brainstorm.interfaces.facade.dto.StudentDto;
 import org.brainstorm.model.Student;
 import org.brainstorm.service.StudentService;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Hidden
 @RestController
 @RequestMapping("/student")
 public class StudentRestController {
