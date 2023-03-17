@@ -1,20 +1,20 @@
 package org.brainstorm.service.impl;
 
-import org.brainstorm.interfaces.strategy.Type;
+import org.brainstorm.interfaces.strategy.DataType;
 import org.brainstorm.service.DataGenerateStrategyService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class DataGenerateStrategyServiceImplTest {
+class NumberListDataGenerateStrategyServiceImplTest {
 
     @Autowired
     DataGenerateStrategyService strategyService;
 
     @Test
     public void test() {
-        Type type = new Type();
-        strategyService.generateData(type, 1);
+        DataType dataType = new DataType("Long");
+        strategyService.generateData(dataType, 1);
     }
 }

@@ -8,7 +8,7 @@ import java.util.List;
  * TODO generate() 可以自定义一些参数
  * @param <T>
  */
-public interface DataGenerateStrategy<T>{
-    boolean canSupport(Type type);
-    List<T> generate(int num);
+public interface NumberListDataGenerateStrategy<T extends Number> extends Strategy{
+    boolean canSupport(DataType dataType);
+    public <T extends Number> List<T> generateRandomList(int length, T min, T max);
 }
