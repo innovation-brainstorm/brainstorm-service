@@ -10,7 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
-import java.util.ArrayList;
 
 @Service
 @Transactional
@@ -48,6 +47,15 @@ public class SessionStatusServiceImpl implements SessionStatusService {
         }
 
         return savedTask;
+    }
+
+    @Override
+    public boolean updateTask(Long id, Status status) {
+        if (id == null) throw new RuntimeException("taskId can't be null.");
+        Task task = taskRepository.findById(id).orElseThrow(() -> new RuntimeException(id + "not found"));
+        task.setStatus(status);
+        taskRepository.save(task);
+        return true;
     }
 
     @Override
