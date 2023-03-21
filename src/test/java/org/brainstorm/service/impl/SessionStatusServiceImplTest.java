@@ -1,6 +1,7 @@
 package org.brainstorm.service.impl;
 
 import org.brainstorm.instant.Status;
+import org.brainstorm.model.MODE;
 import org.brainstorm.model.Session;
 import org.brainstorm.model.Task;
 import org.brainstorm.service.SessionStatusService;
@@ -12,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.web.client.RestTemplate;
 
 import javax.transaction.Transactional;
 import java.util.Arrays;
@@ -31,10 +33,15 @@ class SessionStatusServiceImplTest {
 
     @Test
     void createSessionWithTasksTest() {
-        Session session = new Session("tableA");
+        Session session = new Session();
+        session.setTableName("tableNameA");
+        session.setDestination(MODE.insert);
+        session.setExpectedCount(10000L);
+        session.setTheSchema("testSchema");
         Task task1 = new Task(session, "appid");
         Task task2 = new Task(session, "app_name");
         session.setTasks(Arrays.asList(task1, task2));
+        session.setColumnCount(2);
 
         Session savedSession = sessionService.createSessionWithTasks(session);
         Assert.assertNotNull(savedSession.getId());
@@ -44,10 +51,15 @@ class SessionStatusServiceImplTest {
 
     @Test
     void updateAndFindSessionTest() {
-        Session session = new Session("tableA");
+        Session session = new Session();
+        session.setTableName("tableNameA");
+        session.setDestination(MODE.insert);
+        session.setExpectedCount(10000L);
+        session.setTheSchema("testSchema");
         Task task1 = new Task(session, "appid");
         Task task2 = new Task(session, "app_name");
         session.setTasks(Arrays.asList(task1, task2));
+        session.setColumnCount(2);
 
         Session savedSession = sessionService.createSessionWithTasks(session);
         Assert.assertEquals(Status.NEW, savedSession.getStatus());

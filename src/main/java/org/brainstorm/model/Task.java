@@ -1,5 +1,6 @@
 package org.brainstorm.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -21,9 +22,12 @@ public class Task {
 
     private String columnName;
 
+    private int strategy;
+
     @Column(name = "generated_by_ai")
     private boolean generatedByAI;
 
+    @JsonIgnore
     @ManyToOne
     private Session session;
 
@@ -36,6 +40,11 @@ public class Task {
 
     public Task(Session session, String columnName) {
         this.session = session;
+        this.columnName = columnName;
+        this.fileName = columnName;
+    }
+
+    public void setColumnName(String columnName) {
         this.columnName = columnName;
         this.fileName = columnName;
     }
