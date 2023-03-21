@@ -18,7 +18,14 @@ public class Session {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
+    private String theSchema;
+
     private String tableName;
+
+    @Enumerated(EnumType.STRING)
+    private MODE destination;
+
+    private long expectedCount;
 
     private int columnCount;
 
@@ -30,7 +37,7 @@ public class Session {
     @OneToMany(mappedBy = "session", cascade = CascadeType.ALL)
     private List<Task> tasks;
 
-    public Session(String tableName) {
+    public void setTableName(String tableName) {
         this.tableName = tableName;
         this.directory = tableName;
     }

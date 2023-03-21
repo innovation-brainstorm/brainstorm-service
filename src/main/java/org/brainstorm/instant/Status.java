@@ -1,5 +1,5 @@
 package org.brainstorm.instant;
 
 public enum Status {
-    NEW, RUNNING, COMPLETED
+    NEW, RUNNING, COMPLETED, ERROR
 }
