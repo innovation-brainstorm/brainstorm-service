@@ -1,28 +1,36 @@
 package org.brainstorm.datasource.modle;
 
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import lombok.Data;
 import org.brainstorm.config.jsonhelper.YesNoDeserializer;
 
-
+@Data
 public class Column extends BaseColumn {
+
    @JsonProperty("TYPE_NAME")
    private String typeName;
+
    @JsonProperty("COLUMN_SIZE")
    private Integer columnSize;
+
    @JsonProperty("BUFFER_LENGTH")
    private Integer bufferLength;
 
    @JsonProperty("IS_NULLABLE")
    @JsonDeserialize(using = YesNoDeserializer.class)
    private Boolean isNullable;
+
    @JsonProperty("IS_AUTOINCREMENT")
    @JsonDeserialize(using = YesNoDeserializer.class)
    private Boolean isAutoincrement;
+
    @JsonProperty("IS_GENERATEDCOLUMN")
    @JsonDeserialize(using = YesNoDeserializer.class)
    private Boolean isGeneratedcolumn;
+
+
+
 //    DECIMAL_DIGITS:null
 //    NUM_PREC_RADIX:10
 //    NULLABLE:0

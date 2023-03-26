@@ -2,6 +2,7 @@ package org.brainstorm.controller;
 
 import org.brainstorm.datasource.modle.DataSourceInfo;
 import org.brainstorm.datasource.modle.TableInfo;
+import org.brainstorm.service.DataSourceService;
 import org.brainstorm.service.ExMetaData;
 import org.brainstorm.utils.JdbcUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +20,9 @@ public class DbConfigController {
 
     @Autowired
     ExMetaData metaData;
+
+    @Autowired
+    DataSourceService dataSourceService;
 
 
 //    postman body raw
@@ -39,4 +43,11 @@ public class DbConfigController {
         Connection conn = JdbcUtils.getConnection(dbConfig.getUrl(), dbConfig.getUsername(), dbConfig.getPassword());
         return metaData.getAll(conn);
     }
+
+    @GetMapping("/jdbc/genData")
+    public void genData(@RequestBody DataSourceInfo dbConfig,String tableName){
+        dataSourceService.genData(dbConfig,tableName);
+    }
+
+
 }
