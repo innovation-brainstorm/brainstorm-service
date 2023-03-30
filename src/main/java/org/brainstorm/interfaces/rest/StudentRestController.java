@@ -22,7 +22,7 @@ public class StudentRestController {
     @Autowired
     ModelMapper modelMapper;
 
-    @RequestMapping(value = "{id}")
+    @GetMapping(value = "{id}")
     public ResponseEntity<StudentDto> getStudent(@PathVariable("id") Long id){
         Student std = studentService.getStudentById(id);
         StudentDto studentDto = modelMapper.map(std, StudentDto.class);

@@ -40,6 +40,7 @@ class RestTemplateHandlerTest {
         JSONObject personJsonObject = new JSONObject();
         personJsonObject.put("id", 1);
         personJsonObject.put("name", "John");
+        personJsonObject.put("age", "1");
 
         HttpEntity<String> request =
                 new HttpEntity<>(personJsonObject.toString(), headers);
