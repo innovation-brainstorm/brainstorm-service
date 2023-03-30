@@ -5,11 +5,11 @@ import java.util.List;
 import java.util.Random;
 
 import org.brainstorm.interfaces.strategy.DataType;
-import org.brainstorm.interfaces.strategy.NumberListDataGenerateStrategy;
+import org.brainstorm.interfaces.strategy.Strategy;
 import org.springframework.stereotype.Component;
 
 @Component
-public class NumberListDataGenerateStrategyImpl implements NumberListDataGenerateStrategy<Number> {
+public class NumberListDataGenerateStrategyImpl<T> implements Strategy {
     @Override
     public boolean canSupport(DataType dataType) {
         String typeName = dataType.getTypeName();
@@ -21,30 +21,37 @@ public class NumberListDataGenerateStrategyImpl implements NumberListDataGenerat
     }
 
     @Override
-    public <T extends Number> List<T> generateRandomList(int length, T min, T max) {
+    public List<T> generate(DataType dataType) {
 
         List<T> randomList = new ArrayList<>();
         Random random = new Random();
 
-        if (min instanceof Integer && max instanceof Integer) {
-            for (int i = 0; i < length; i++) {
-                int randomNumber = random.nextInt(max.intValue() - min.intValue() + 1) + min.intValue();
+        if (dataType.getMin() instanceof Integer && dataType.getMax() instanceof Integer) {
+            for (int i = 0; i < dataType.getLength(); i++) {
+                int randomNumber = random
+                    .nextInt(((Integer)dataType.getMax()).intValue() - ((Integer)dataType.getMin()).intValue() + 1)
+                    + ((Integer)dataType.getMin()).intValue();
                 randomList.add((T)Integer.valueOf(randomNumber));
             }
-        } else if (min instanceof Double && max instanceof Double) {
-            for (int i = 0; i < length; i++) {
-                double randomNumber = random.nextDouble() * (max.doubleValue() - min.doubleValue()) + min.doubleValue();
+        } else if (dataType.getMin() instanceof Double && dataType.getMax() instanceof Double) {
+            for (int i = 0; i < dataType.getLength(); i++) {
+                double randomNumber = random.nextDouble()
+                    * (((Double)dataType.getMax()).doubleValue() - ((Double)dataType.getMin()).doubleValue())
+                    + ((Double)dataType.getMin()).doubleValue();
                 randomList.add((T)Double.valueOf(randomNumber));
             }
-        } else if (min instanceof Long && max instanceof Long) {
-            for (int i = 0; i < length; i++) {
-                long randomNumber =
-                    random.nextLong() / Long.MAX_VALUE * (max.longValue() - min.longValue()) + min.longValue();
+        } else if (dataType.getMin() instanceof Long && dataType.getMax() instanceof Long) {
+            for (int i = 0; i < dataType.getLength(); i++) {
+                long randomNumber = random.nextLong() / Long.MAX_VALUE
+                    * (((Long)dataType.getMax()).longValue() - ((Long)dataType.getMin()).longValue())
+                    + ((Long)dataType.getMin()).longValue();
                 randomList.add((T)Long.valueOf(randomNumber));
             }
-        } else if (min instanceof Float && max instanceof Float) {
-            for (int i = 0; i < length; i++) {
-                float randomNumber = random.nextFloat() * (max.floatValue() - min.floatValue()) + min.floatValue();
+        } else if (dataType.getMin() instanceof Float && dataType.getMax() instanceof Float) {
+            for (int i = 0; i < dataType.getLength(); i++) {
+                float randomNumber = random.nextFloat()
+                    * (((Float)dataType.getMax()).floatValue() - ((Float)dataType.getMin()).floatValue())
+                    + ((Float)dataType.getMin()).floatValue();
                 randomList.add((T)Float.valueOf(randomNumber));
             }
         } else {
