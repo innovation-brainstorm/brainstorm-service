@@ -31,25 +31,29 @@ class NumberListNumberListDataGenerateStrategyTest {
     public void testGenerateRandomList() {
         NumberListDataGenerateStrategyImpl strategy = new NumberListDataGenerateStrategyImpl();
 
-        List<Integer> integerList = strategy.generateRandomList(10, 0, 100);
+        DataType dataTypeInt = new DataType<>("integer", 10, 0, 100);
+        List<Integer> integerList = strategy.generate(dataTypeInt);
         Assertions.assertEquals(10, integerList.size());
         for (Integer integer : integerList) {
             Assertions.assertTrue(integer >= 0 && integer <= 100);
         }
 
-        List<Long> longList = strategy.generateRandomList(10, 0L, 100L);
+        DataType dataTypeLong = new DataType<>("Long", 10, 0L, 100L);
+        List<Long> longList = strategy.generate(dataTypeLong);
         Assertions.assertEquals(10, longList.size());
         for (Long aLong : longList) {
             Assertions.assertTrue(aLong >= 0L && aLong <= 100L);
         }
 
-        List<Float> floatList = strategy.generateRandomList(10, 0.0f, 100.0f);
+        DataType dataTypeFloat = new DataType<>("float", 10, 0.0f, 100.0f);
+        List<Float> floatList = strategy.generate(dataTypeFloat);
         Assertions.assertEquals(10, floatList.size());
         for (Float aFloat : floatList) {
             Assertions.assertTrue(aFloat >= 0.0f && aFloat <= 100.0f);
         }
 
-        List<Double> doubleList = strategy.generateRandomList(10, 0.0, 100.0);
+        DataType dataTypeDouble = new DataType<>("Double", 10, 0.0, 100.0);
+        List<Double> doubleList = strategy.generate(dataTypeDouble);
         Assertions.assertEquals(10, doubleList.size());
         for (Double aDouble : doubleList) {
             Assertions.assertTrue(aDouble >= 0.0 && aDouble <= 100.0);

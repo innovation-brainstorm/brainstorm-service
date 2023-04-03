@@ -15,6 +15,6 @@ class NumberListDataGenerateStrategyServiceImplTest {
     @Test
     public void test() {
         DataType dataType = new DataType("Long");
-        strategyService.generateData(dataType, 1);
+        strategyService.generateData(dataType);
     }
 }
