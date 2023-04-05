@@ -1,31 +1,31 @@
 package org.brainstorm.interfaces.strategy.impl;
 
-import org.brainstorm.interfaces.strategy.DataType;
-import org.brainstorm.interfaces.strategy.RandomSelectionDataGenerateStrategy;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class RandomSelectionDataGenerateStrategyImpl implements RandomSelectionDataGenerateStrategy {
+import org.brainstorm.interfaces.strategy.DataType;
+import org.brainstorm.interfaces.strategy.Strategy;
+
+public class RandomSelectionDataGenerateStrategyImpl<T> implements Strategy {
+
     @Override
     public boolean canSupport(DataType dataType) {
         return true;
     }
 
-    @Override
-    public <T> List<T> selectRandomValues(List<T> values, int length) {
-        Random random =new Random();
-        if (length >= 0) {
-            List<T> result = new ArrayList<>(length);
+    public List<T> generate(DataType dataType) {
+        Random random = new Random();
+        if (dataType.getLength() >= 0) {
+            List<T> result = new ArrayList<>(dataType.getLength());
 
-            for (int i = 0; i < length; i++) {
-                int randomIndex = random.nextInt(values.size());
-                result.add(values.get(randomIndex));
+            for (int i = 0; i < dataType.getLength(); i++) {
+                int randomIndex = random.nextInt(dataType.getValues().size());
+                result.add((T)dataType.getValues().get(randomIndex));
             }
 
-        return result;
-        }
-        else return new ArrayList<>();
+            return result;
+        } else
+            return new ArrayList<>();
     }
 }

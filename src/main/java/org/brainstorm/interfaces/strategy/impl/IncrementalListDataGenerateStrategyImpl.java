@@ -1,26 +1,28 @@
 package org.brainstorm.interfaces.strategy.impl;
 
-import org.brainstorm.interfaces.strategy.DataType;
-import org.brainstorm.interfaces.strategy.IncrementalListDataGenerateStrategy;
-
 import java.util.ArrayList;
 import java.util.List;
 
-public class IncrementalListDataGenerateStrategyImpl implements IncrementalListDataGenerateStrategy {
+import org.brainstorm.interfaces.strategy.DataType;
+import org.brainstorm.interfaces.strategy.Strategy;
+
+public class IncrementalListDataGenerateStrategyImpl implements Strategy {
+
     @Override
     public boolean canSupport(DataType dataType) {
         String typeName = dataType.getTypeName();
-        if ( typeName.equals("Integer") ) {
+        if (typeName.equals("Integer")) {
             return true;
         }
         return false;
     }
 
-    public List<Integer> generateIncrementalList(int size, int startValue) {
+    @Override
+    public List<Integer> generate(DataType dataType) {
         List<Integer> incrementalList = new ArrayList<>();
-        if (size > 0) {
-            incrementalList.add(startValue);
-            for (int i = 1; i < size; i++) {
+        if (dataType.getLength() > 0) {
+            incrementalList.add(dataType.getStartValue());
+            for (int i = 1; i < dataType.getLength(); i++) {
                 incrementalList.add(incrementalList.get(i - 1) + 1);
             }
         }

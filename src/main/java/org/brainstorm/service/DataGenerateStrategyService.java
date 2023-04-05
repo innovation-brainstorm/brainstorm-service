@@ -1,9 +1,14 @@
 package org.brainstorm.service;
 
-import org.brainstorm.interfaces.strategy.DataType;
-
 import java.util.List;
 
-public interface DataGenerateStrategyService {
-    StrategyData generateData(DataType dataType, int num);
+import org.brainstorm.interfaces.strategy.DataType;
+import org.brainstorm.interfaces.strategy.Strategy;
+
+public interface DataGenerateStrategyService<T> {
+    List<Strategy> getAllSupportStrategy(DataType dataType);
+
+    StrategyData generateData(DataType dataType, int id);
+
+    Strategy getSelectedStrategy(int id);
 }
