@@ -7,6 +7,7 @@ import org.brainstorm.interfaces.strategy.DataType;
 import org.brainstorm.interfaces.strategy.Strategy;
 
 public class SpecificValueDataGenerateStrategyImpl<T> implements Strategy {
+
     @Override
     public boolean canSupport(DataType dataType) {
         return true;

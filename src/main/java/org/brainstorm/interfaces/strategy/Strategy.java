@@ -11,4 +11,5 @@ public interface Strategy<T> {
     boolean canSupport(DataType dataType);
 
     List<T> generate(DataType dataType);
+
 }

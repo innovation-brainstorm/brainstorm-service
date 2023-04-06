@@ -8,6 +8,7 @@ import org.brainstorm.interfaces.strategy.DataType;
 import org.brainstorm.interfaces.strategy.Strategy;
 
 public class RandomSelectionDataGenerateStrategyImpl<T> implements Strategy {
+
     @Override
     public boolean canSupport(DataType dataType) {
         return true;

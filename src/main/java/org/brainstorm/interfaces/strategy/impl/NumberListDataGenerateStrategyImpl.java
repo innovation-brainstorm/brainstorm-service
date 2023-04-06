@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class NumberListDataGenerateStrategyImpl<T> implements Strategy {
+
     @Override
     public boolean canSupport(DataType dataType) {
         String typeName = dataType.getTypeName();
