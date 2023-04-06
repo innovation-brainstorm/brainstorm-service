@@ -34,14 +34,18 @@ public class ExMetaDataImpl implements ExMetaData {
         List<String> userTableNames = getUserTableNames(conn);
         Map<String, TableInfo> res=new HashMap<>();
         for (String userTableName : userTableNames) {
-            TableInfo tableInfo =new TableInfo();
-            tableInfo.setColumnList(getColumnsInfo(conn,userTableName));
-            tableInfo.setPkList(getPrimaryKeysInfo(conn,userTableName));
-            tableInfo.setFkList(getFKSInfo(conn,userTableName));
+            TableInfo tableInfo = getTableInfo(conn,userTableName);
             res.put(userTableName,tableInfo);
         }
-
         return res;
+    }
+
+    public TableInfo getTableInfo(Connection conn,String userTableName) throws SQLException {
+        TableInfo tableInfo = new TableInfo();
+        tableInfo.setColumnList(getColumnsInfo(conn,userTableName));
+        tableInfo.setPkList(getPrimaryKeysInfo(conn,userTableName));
+        tableInfo.setFkList(getFKSInfo(conn,userTableName));
+        return tableInfo;
     }
 
     public List<Column> getColumnsInfo(Connection conn, String tableName) throws SQLException {
