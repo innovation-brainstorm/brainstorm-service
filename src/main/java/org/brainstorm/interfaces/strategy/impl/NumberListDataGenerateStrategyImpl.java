@@ -6,6 +6,7 @@ import java.util.Random;
 
 import org.brainstorm.interfaces.strategy.DataType;
 import org.brainstorm.interfaces.strategy.Strategy;
+import org.brainstorm.interfaces.strategy.StrategyEnums;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -59,6 +60,11 @@ public class NumberListDataGenerateStrategyImpl<T> implements Strategy {
             throw new IllegalArgumentException("Unsupported Number type");
         }
         return randomList;
+    }
+
+    @Override
+    public int getIdentifier() {
+        return StrategyEnums.NumberList.ordinal();
     }
 
 }

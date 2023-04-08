@@ -1,29 +1,30 @@
 package org.brainstorm.service.impl;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
+import lombok.AllArgsConstructor;
 import org.brainstorm.interfaces.strategy.DataType;
 import org.brainstorm.interfaces.strategy.Strategy;
-import org.brainstorm.interfaces.strategy.impl.IncrementalListDataGenerateStrategyImpl;
-import org.brainstorm.interfaces.strategy.impl.NumberListDataGenerateStrategyImpl;
-import org.brainstorm.interfaces.strategy.impl.RandomSelectionDataGenerateStrategyImpl;
-import org.brainstorm.interfaces.strategy.impl.SpecificValueDataGenerateStrategyImpl;
+import org.brainstorm.interfaces.strategy.StrategyEnums;
+import org.brainstorm.interfaces.strategy.impl.*;
 import org.brainstorm.service.DataGenerateStrategyService;
 import org.brainstorm.service.StrategyData;
 import org.springframework.stereotype.Service;
 
-import lombok.AllArgsConstructor;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 @Service
 @AllArgsConstructor
 public class DataGenerateStrategyServiceImpl<T> implements DataGenerateStrategyService {
     @Override
     public List<Strategy> getAllSupportStrategy(DataType dataType) {
-        List<Strategy> strategyList = new ArrayList<>(
-            Arrays.asList(new IncrementalListDataGenerateStrategyImpl(), new NumberListDataGenerateStrategyImpl(),
-                new RandomSelectionDataGenerateStrategyImpl(), new SpecificValueDataGenerateStrategyImpl()));
+        List<Strategy> strategyList = Arrays.asList(
+                new IncrementalListDataGenerateStrategyImpl(),
+                new NumberListDataGenerateStrategyImpl(),
+                new RandomSelectionDataGenerateStrategyImpl(),
+                new SpecificValueDataGenerateStrategyImpl(),
+                new AIDataGenerateStrategyImpl()
+        );
         List<Strategy> allSupportDataGenerateStrategyList = new ArrayList<>();
         strategyList.forEach(e -> {
             if (e.canSupport(dataType)) {
@@ -35,9 +36,9 @@ public class DataGenerateStrategyServiceImpl<T> implements DataGenerateStrategyS
 
     @Override
     public StrategyData generateData(DataType dataType, int id) {
-        if (id > 4 || id < 1)
+        if (id > 4 || id < 0)
             return new StrategyData();
-        Strategy strategy = getSelectedStrategy(id);
+        Strategy strategy = StrategyEnums.values()[id].getStrategy();
         System.out.println(strategy);
         List<T> generate = strategy.generate(dataType);
 

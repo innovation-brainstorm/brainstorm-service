@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.brainstorm.interfaces.strategy.DataType;
 import org.brainstorm.interfaces.strategy.Strategy;
+import org.brainstorm.interfaces.strategy.StrategyEnums;
 
 public class IncrementalListDataGenerateStrategyImpl implements Strategy {
 
@@ -27,5 +28,10 @@ public class IncrementalListDataGenerateStrategyImpl implements Strategy {
             }
         }
         return incrementalList;
+    }
+
+    @Override
+    public int getIdentifier() {
+        return StrategyEnums.IncrementalList.ordinal();
     }
 }
