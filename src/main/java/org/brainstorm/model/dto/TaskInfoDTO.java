@@ -8,8 +8,11 @@ import org.brainstorm.instant.Status;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class TaskResponseDto {
+public class TaskInfoDTO {
     private Long sessionId;
     private Long taskId;
+    private String columnName;
+    private Long expectedCount;
     private Status status;
+    private String filePath;
 }
