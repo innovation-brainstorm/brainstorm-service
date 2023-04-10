@@ -6,6 +6,7 @@ import java.util.Random;
 
 import org.brainstorm.interfaces.strategy.DataType;
 import org.brainstorm.interfaces.strategy.Strategy;
+import org.brainstorm.interfaces.strategy.StrategyEnums;
 
 public class RandomSelectionDataGenerateStrategyImpl<T> implements Strategy {
 
@@ -27,5 +28,10 @@ public class RandomSelectionDataGenerateStrategyImpl<T> implements Strategy {
             return result;
         } else
             return new ArrayList<>();
+    }
+
+    @Override
+    public int getIdentifier() {
+        return StrategyEnums.RandomSelection.ordinal();
     }
 }

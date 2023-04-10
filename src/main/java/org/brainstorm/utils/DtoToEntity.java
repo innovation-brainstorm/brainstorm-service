@@ -2,6 +2,7 @@ package org.brainstorm.utils;
 
 import org.brainstorm.model.Session;
 import org.brainstorm.model.Task;
+import org.brainstorm.model.dto.AIUpdateDTO;
 import org.brainstorm.model.dto.Column;
 import org.brainstorm.model.dto.NewSessionDto;
 
@@ -20,12 +21,20 @@ public class DtoToEntity {
             Task task = new Task();
             task.setSession(session);
             task.setColumnName(column.getName());
-            //todo setGenerateByAI
+            task.setGeneratedByAI(column.getStrategy() == 0);
             task.setStrategy(column.getStrategy());
             tasks.add(task);
         }
         session.setTasks(tasks);
         session.setColumnCount(tasks.size());
         return session;
+    }
+
+    public static Task convertToTask(AIUpdateDTO aiUpdateDTO) {
+        Task task = new Task();
+        task.setId(aiUpdateDTO.getTaskId());
+        task.setStatus(aiUpdateDTO.getStatus());
+        task.setFileName(aiUpdateDTO.getFilePath());
+        return task;
     }
 }

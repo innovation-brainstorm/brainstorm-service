@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.brainstorm.interfaces.strategy.DataType;
 import org.brainstorm.interfaces.strategy.Strategy;
+import org.brainstorm.interfaces.strategy.StrategyEnums;
 
 public class SpecificValueDataGenerateStrategyImpl<T> implements Strategy {
 
@@ -20,5 +21,10 @@ public class SpecificValueDataGenerateStrategyImpl<T> implements Strategy {
             list.add((T)dataType.getValue()); // 将value添加到List的每个位置上
         }
         return list;
+    }
+
+    @Override
+    public int getIdentifier() {
+        return StrategyEnums.SpecificValue.ordinal();
     }
 }

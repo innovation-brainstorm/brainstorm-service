@@ -1,10 +1,8 @@
 package org.brainstorm.service;
 
-import org.brainstorm.instant.Status;
 import org.brainstorm.model.Session;
 import org.brainstorm.model.Task;
-
-import java.util.List;
+import org.brainstorm.model.dto.AIUpdateDTO;
 
 public interface SessionStatusService {
     Session getSessionById(Long id);
@@ -15,7 +13,7 @@ public interface SessionStatusService {
 
     Task updateTask(Task task);
 
-    boolean updateTask(Long id, Status status);
+    Task updateTask(AIUpdateDTO dto) ;
 
     Session updateSession(Session session);
 

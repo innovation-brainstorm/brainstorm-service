@@ -1,15 +1,15 @@
 package org.brainstorm.model.dto;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import org.brainstorm.instant.Status;
 
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class TaskResponseDto {
+public class AIUpdateDTO {
     private Long sessionId;
     private Long taskId;
+    private String columnName;
+    private Long actualCount;
     private Status status;
+    private String filePath;
+
 }

@@ -48,4 +48,16 @@ public class Task {
         this.columnName = columnName;
         this.fileName = columnName;
     }
+
+    @Override
+    public String toString() {
+        return "Task{" +
+                "id=" + id +
+                ", fileName='" + fileName + '\'' +
+                ", columnName='" + columnName + '\'' +
+                ", strategy=" + strategy +
+                ", generatedByAI=" + generatedByAI +
+                ", status=" + status +
+                '}';
+    }
 }
