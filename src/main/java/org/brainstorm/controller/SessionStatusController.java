@@ -45,7 +45,7 @@ public class SessionStatusController {
 
     //for test
     @PostMapping("/task/createTask")
-    public @ResponseBody TaskResponseDto createTask(@RequestBody TaskInfoDTO taskInfoDTO) {
+    public TaskResponseDto createTask(@RequestBody TaskInfoDTO taskInfoDTO) {
         return new TaskResponseDto(taskInfoDTO.getSessionId(), taskInfoDTO.getTaskId(), Status.RUNNING);
     }
 }

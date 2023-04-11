@@ -16,6 +16,7 @@ import org.brainstorm.repository.TaskRepository;
 import org.brainstorm.service.DataGenerateStrategyService;
 import org.brainstorm.service.SessionStatusService;
 import org.brainstorm.service.StrategyData;
+import org.brainstorm.service.ValueFromTPDB;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
@@ -35,8 +36,14 @@ import java.util.concurrent.TimeUnit;
 @Transactional
 @Slf4j
 public class SessionStatusServiceImpl implements SessionStatusService {
-    @Value("${URL.AI}")
+    @Value("${AI.URL}")
     private String URL_AI;
+
+    @Value("${AI.NUMBER.OF.VALUE.NEEDED}")
+    private Long NUMBER_OF_VALUE_NEEDED_AI;
+
+    @Value("${root.directory}")
+    private String rootDir;
 
     @Autowired
     private SessionRepository sessionRepository;
@@ -49,6 +56,9 @@ public class SessionStatusServiceImpl implements SessionStatusService {
 
     @Autowired
     private DataGenerateStrategyService strategyService;
+
+    @Autowired
+    private ValueFromTPDB valueFromTPDB;
 
     private ThreadPoolExecutor executor = new ThreadPoolExecutor(5, 10, 1L,
             TimeUnit.SECONDS, new ArrayBlockingQueue<>(20), new ThreadPoolExecutor.CallerRunsPolicy());
@@ -84,7 +94,7 @@ public class SessionStatusServiceImpl implements SessionStatusService {
         executor.execute(() -> {
             try {
                 StrategyData strategyData = strategyService.generateData(defaultDataType, task.getStrategy());
-                populateValueInFile(File.separator + session.getDirectory() + File.separator + task.getFileName(), strategyData.getData());
+                populateValueInFile(rootDir + File.separator + session.getDirectory() + File.separator + task.getFileName() + ".csv", strategyData.getData());
                 TimeUnit.SECONDS.sleep(2);
 
                 task.setStatus(Status.COMPLETED);
@@ -93,7 +103,7 @@ public class SessionStatusServiceImpl implements SessionStatusService {
                 log.error("taskId: {} generate data failed, failed reason: {}", task.getId(), e.getMessage());
                 task.setStatus(Status.ERROR);
                 taskRepository.save(task);
-                sessionRepository.updateStatusById(session.getId(),Status.ERROR); // seems in another thread entity status  will be detached
+                sessionRepository.updateStatusById(session.getId(), Status.ERROR); // seems in another thread entity status  will be detached
             }
         });
     }
@@ -102,13 +112,21 @@ public class SessionStatusServiceImpl implements SessionStatusService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
+        String path = rootDir + File.separator + session.getDirectory() + File.separator + "learning" + File.separator + task.getColumnName() + ".csv";
+        try {
+            generateLearningData(session.getTableName(), task.getColumnName(), path);
+        } catch (Exception e) {
+            task.setStatus(Status.ERROR);
+            return;
+        }
+
         JSONObject taskInfo = new JSONObject();
         taskInfo.put("sessionId", session.getId());
         taskInfo.put("taskId", task.getId());
         taskInfo.put("columnName", task.getColumnName());
         taskInfo.put("expectedCount", session.getExpectedCount());
         taskInfo.put("status", task.getStatus());
-        taskInfo.put("filePath", session.getDirectory());
+        taskInfo.put("filePath", path);
         HttpEntity<String> request = new HttpEntity<>(taskInfo.toString(), headers);
 
         ResponseEntity<TaskResponseDto> responseEntity = restTemplate.postForEntity(URL_AI, request, TaskResponseDto.class);
@@ -121,6 +139,14 @@ public class SessionStatusServiceImpl implements SessionStatusService {
                     "error msg: {}", responseEntity.getStatusCode(), responseEntity.getBody());
         }
         updateTask(task);
+    }
+
+    private void generateLearningData(String tableName, String columnName, String filePath) throws Exception {
+        int batchCount = 1000;
+        for (int i = 0; i * batchCount <= NUMBER_OF_VALUE_NEEDED_AI; i++) {
+            List<String> data = valueFromTPDB.getDataByColumnMySQL(tableName, columnName, i * batchCount, (i + 1) * batchCount);
+            populateValueInFile(filePath, data);
+        }
     }
 
 
@@ -162,7 +188,7 @@ public class SessionStatusServiceImpl implements SessionStatusService {
         return sessionRepository.save(session);
     }
 
-    private void populateValueInFile(String filePath, List<Integer> values) throws IOException {
+    private void populateValueInFile(String filePath, List<String> values) throws IOException {
         File file = new File(filePath);
         FileUtils.touch(new File(filePath));
         FileUtils.writeLines(file, values);

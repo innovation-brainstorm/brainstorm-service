@@ -46,7 +46,7 @@ public class Task {
 
     public void setColumnName(String columnName) {
         this.columnName = columnName;
-        this.fileName = columnName;
+        this.fileName = columnName + ".csv";
     }
 
     @Override

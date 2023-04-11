@@ -1,6 +1,7 @@
 package org.brainstorm.interfaces.rest;
 
 import io.swagger.v3.oas.annotations.Hidden;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.brainstorm.interfaces.facade.dto.StudentDto;
 import org.brainstorm.model.Student;
 import org.brainstorm.service.StudentService;
@@ -10,7 +11,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 @Hidden
 @RestController
@@ -23,10 +26,28 @@ public class StudentRestController {
     ModelMapper modelMapper;
 
     @GetMapping(value = "{id}")
-    public ResponseEntity<StudentDto> getStudent(@PathVariable("id") Long id){
+    public ResponseEntity<StudentDto> getStudent(@PathVariable("id") Long id) {
         Student std = studentService.getStudentById(id);
         StudentDto studentDto = modelMapper.map(std, StudentDto.class);
         return ResponseEntity.ok().body(studentDto);
+    }
+
+    @PostMapping("/generateRandom")
+    public boolean generateRandomStudent() {
+        ArrayList<Student> students = new ArrayList<>();
+        Random random = new Random();
+        for (int i = 0; i < 10001; i++) {
+            Student student = new Student();
+            student.setName(RandomStringUtils.randomAlphabetic(5) + " " + RandomStringUtils.randomAlphabetic(5));
+            student.setAge(random.nextInt(100));
+            students.add(student);
+            if (i % 1000 == 0) {
+                studentService.createStudent(students);
+                students.clear();
+            }
+        }
+        studentService.createStudent(students);
+        return true;
     }
 
     @PostMapping

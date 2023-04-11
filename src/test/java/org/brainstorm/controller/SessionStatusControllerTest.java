@@ -21,12 +21,13 @@ class SessionStatusControllerTest {
 
         ObjectMapper mapper = new ObjectMapper();
         NewSessionDto request = mapper.readValue("{\n" +
-                "  \"schema\": \"schema111\",\n" +
-                "  \"table\": \"tablenmae1\",\n" +
+                "  \"schema\": \"brainstorm\",\n" +
+                "  \"table\": \"student\",\n" +
                 "  \"quantity\": 10000,\n" +
                 "  \"destination\": \"view\",\n" +
                 "  \"columns\": [\n" +
-                "    {\"name\": \"columnName1\", \"strategy\": 0}\n" +
+                "    {\"name\": \"name\", \"strategy\": 0},\n" +
+                "    {\"name\": \"age\", \"strategy\": 1}\n" +
                 "  ]\n" +
                 "}", NewSessionDto.class);
         ResponseEntity<ResponseDto> entity = restTemplate.postForEntity("http://localhost:8080/session/generatedData", request, ResponseDto.class);
@@ -41,11 +42,11 @@ class SessionStatusControllerTest {
         ObjectMapper mapper = new ObjectMapper();
         AIUpdateDTO request = mapper.readValue("{\n" +
                 "    \"sessionId\":117,\n" +
-                "    \"taskId\":313,\n" +
+                "    \"taskId\":242,\n" +
                 "    \"columnName\":\"columnName2\",\n" +
                 "    \"actualCount\":1000,\n" +
                 "    \"status\":\"COMPLETED\",\n" +
-                "    \"filePath\":\"A.test\"\n" +
+                "    \"filePath\":\"name2.csv\"\n" +
                 "}", AIUpdateDTO.class);
 
         ResponseEntity<ResponseDto> entity = restTemplate.postForEntity("http://localhost:8080/task/updateStatus", request, ResponseDto.class);
