@@ -5,6 +5,9 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.Data;
 import org.brainstorm.config.jsonhelper.YesNoDeserializer;
 
+import java.util.List;
+import java.util.Map;
+
 @Data
 public class Column extends BaseColumn {
 
@@ -29,6 +32,7 @@ public class Column extends BaseColumn {
    @JsonDeserialize(using = YesNoDeserializer.class)
    private Boolean isGeneratedcolumn;
 
+   private Map<Integer,String> Strategies;
 
 
 //    DECIMAL_DIGITS:null

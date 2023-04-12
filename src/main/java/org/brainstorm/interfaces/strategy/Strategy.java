@@ -13,4 +13,6 @@ public interface Strategy<T> {
     List<T> generate(DataType dataType);
 
     int getIdentifier();
+
+    String getStrategyName();
 }

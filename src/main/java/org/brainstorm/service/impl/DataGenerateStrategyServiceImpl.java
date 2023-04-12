@@ -16,6 +16,7 @@ import java.util.List;
 @Service
 @AllArgsConstructor
 public class DataGenerateStrategyServiceImpl<T> implements DataGenerateStrategyService {
+
     @Override
     public List<Strategy> getAllSupportStrategy(DataType dataType) {
         List<Strategy> strategyList = Arrays.asList(

@@ -1,9 +1,11 @@
 package org.brainstorm.interfaces.strategy.impl;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
+import org.brainstorm.enums.DataTypeEnum;
 import org.brainstorm.interfaces.strategy.DataType;
 import org.brainstorm.interfaces.strategy.Strategy;
 import org.brainstorm.interfaces.strategy.StrategyEnums;
@@ -15,11 +17,8 @@ public class NumberListDataGenerateStrategyImpl<T> implements Strategy {
     @Override
     public boolean canSupport(DataType dataType) {
         String typeName = dataType.getTypeName();
-        if (typeName.equals("Integer") || typeName.equals("Long") || typeName.equals("Float")
-            || typeName.equals("Double")) {
-            return true;
-        }
-        return false;
+        List<String> dataStrategyList = Arrays.asList(DataTypeEnum.BIGINT.get(), DataTypeEnum.INT.get(), DataTypeEnum.DOUBLE.get());
+        return dataStrategyList.contains(typeName);
     }
 
     @Override
@@ -67,4 +66,8 @@ public class NumberListDataGenerateStrategyImpl<T> implements Strategy {
         return StrategyEnums.NumberList.ordinal();
     }
 
+    @Override
+    public String getStrategyName() {
+        return StrategyEnums.NumberList.name();
+    }
 }

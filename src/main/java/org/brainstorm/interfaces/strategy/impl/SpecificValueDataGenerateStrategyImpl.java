@@ -27,4 +27,9 @@ public class SpecificValueDataGenerateStrategyImpl<T> implements Strategy {
     public int getIdentifier() {
         return StrategyEnums.SpecificValue.ordinal();
     }
+
+    @Override
+    public String getStrategyName() {
+        return StrategyEnums.SpecificValue.name();
+    }
 }
