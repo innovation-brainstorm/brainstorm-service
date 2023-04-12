@@ -1,8 +1,10 @@
 package org.brainstorm.interfaces.strategy.impl;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
+import org.brainstorm.enums.DataTypeEnum;
 import org.brainstorm.interfaces.strategy.DataType;
 import org.brainstorm.interfaces.strategy.Strategy;
 import org.brainstorm.interfaces.strategy.StrategyEnums;
@@ -12,10 +14,8 @@ public class IncrementalListDataGenerateStrategyImpl implements Strategy {
     @Override
     public boolean canSupport(DataType dataType) {
         String typeName = dataType.getTypeName();
-        if (typeName.equals("Integer")) {
-            return true;
-        }
-        return false;
+        List<String> dataStrategyList = Arrays.asList(DataTypeEnum.BIGINT.get(), DataTypeEnum.INT.get());
+        return dataStrategyList.contains(typeName);
     }
 
     @Override
@@ -33,5 +33,10 @@ public class IncrementalListDataGenerateStrategyImpl implements Strategy {
     @Override
     public int getIdentifier() {
         return StrategyEnums.IncrementalList.ordinal();
+    }
+
+    @Override
+    public String getStrategyName() {
+        return StrategyEnums.IncrementalList.name();
     }
 }

@@ -5,8 +5,13 @@ import org.brainstorm.datasource.modle.Column;
 import org.brainstorm.datasource.modle.ForeignKey;
 import org.brainstorm.datasource.modle.PrimaryKey;
 import org.brainstorm.datasource.modle.TableInfo;
+import org.brainstorm.interfaces.strategy.DataType;
+import org.brainstorm.interfaces.strategy.Strategy;
+import org.brainstorm.service.DataGenerateStrategyService;
 import org.brainstorm.service.ExMetaData;
 import org.brainstorm.utils.JsonUtils;
+import org.hibernate.type.DateType;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.sql.Connection;
@@ -18,6 +23,10 @@ import java.util.*;
 @Service
 @Slf4j
 public class ExMetaDataImpl implements ExMetaData {
+
+    @Autowired
+    private DataGenerateStrategyService dataGenerateStrategyService;
+
     @Override
     public List<String> getUserTableNames(Connection conn) throws SQLException {
         DatabaseMetaData metaData = conn.getMetaData();
@@ -54,11 +63,27 @@ public class ExMetaDataImpl implements ExMetaData {
         try (ResultSet columns = metaData.getColumns(conn.getCatalog(), null, tableName, null)) {
             while (columns.next()) {
                 Map<String, Object> map = getInfoMap(columns);
-                Column column= JsonUtils.convertJsonToJava(map, Column.class);
+                Column column = JsonUtils.convertJsonToJava(map, Column.class);
+                genColumnStrategy(column);
                 columnsList.add(column);
             }
         }
         return columnsList;
+    }
+
+    public void genColumnStrategy(Column column){
+        DataType dataType = new DataType(column.getTypeName());
+        List<Strategy> strategyList = dataGenerateStrategyService.getAllSupportStrategy(dataType);
+
+        Map<Integer, String> strategyMap = new HashMap<>();
+
+        strategyList.forEach(strategy -> {
+            Integer id = strategy.getIdentifier();
+            String name = strategy.getStrategyName();
+            strategyMap.put(id,name);
+        });
+
+        column.setStrategies(strategyMap);
     }
 
     public List<PrimaryKey> getPrimaryKeysInfo(Connection conn, String tableName) throws SQLException {

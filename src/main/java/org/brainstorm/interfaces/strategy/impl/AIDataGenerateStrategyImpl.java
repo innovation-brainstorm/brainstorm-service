@@ -24,4 +24,9 @@ public class AIDataGenerateStrategyImpl implements Strategy {
     public int getIdentifier() {
         return StrategyEnums.AI.ordinal();
     }
+
+    @Override
+    public String getStrategyName() {
+        return StrategyEnums.AI.name();
+    }
 }

@@ -34,4 +34,9 @@ public class RandomSelectionDataGenerateStrategyImpl<T> implements Strategy {
     public int getIdentifier() {
         return StrategyEnums.RandomSelection.ordinal();
     }
+
+    @Override
+    public String getStrategyName() {
+        return StrategyEnums.RandomSelection.name();
+    }
 }
