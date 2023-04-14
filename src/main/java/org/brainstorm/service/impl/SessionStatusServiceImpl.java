@@ -26,6 +26,7 @@ import org.springframework.web.client.RestTemplate;
 import javax.transaction.Transactional;
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -43,7 +44,7 @@ public class SessionStatusServiceImpl implements SessionStatusService {
     private Long NUMBER_OF_VALUE_NEEDED_AI;
 
     @Value("${root.directory}")
-    private String rootDir;
+    private String ROOT_DIR;
 
     @Autowired
     private SessionRepository sessionRepository;
@@ -94,8 +95,9 @@ public class SessionStatusServiceImpl implements SessionStatusService {
         executor.execute(() -> {
             try {
                 StrategyData strategyData = strategyService.generateData(defaultDataType, task.getStrategy());
-                populateValueInFile(rootDir + File.separator + session.getDirectory() + File.separator + task.getFileName() + ".csv", strategyData.getData());
-                TimeUnit.SECONDS.sleep(2);
+                populateValueInFile(ROOT_DIR + File.separator + session.getDirectory() + File.separator + task.getFileName(), Arrays.asList(task.getColumnName()), true);
+                populateValueInFile(ROOT_DIR + File.separator + session.getDirectory() + File.separator + task.getFileName(), strategyData.getData(),false);
+//                TimeUnit.SECONDS.sleep(2);
 
                 task.setStatus(Status.COMPLETED);
                 updateTask(task);
@@ -112,7 +114,7 @@ public class SessionStatusServiceImpl implements SessionStatusService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
-        String path = rootDir + File.separator + session.getDirectory() + File.separator + "learning" + File.separator + task.getColumnName() + ".csv";
+        String path = ROOT_DIR + File.separator + session.getDirectory() + File.separator + "learning" + File.separator + task.getFileName();
         try {
             generateLearningData(session.getTableName(), task.getColumnName(), path);
         } catch (Exception e) {
@@ -142,10 +144,11 @@ public class SessionStatusServiceImpl implements SessionStatusService {
     }
 
     private void generateLearningData(String tableName, String columnName, String filePath) throws Exception {
+        populateValueInFile(filePath, Arrays.asList("\"" + columnName + "\""),true);
         int batchCount = 1000;
         for (int i = 0; i * batchCount <= NUMBER_OF_VALUE_NEEDED_AI; i++) {
             List<String> data = valueFromTPDB.getDataByColumnMySQL(tableName, columnName, i * batchCount, (i + 1) * batchCount);
-            populateValueInFile(filePath, data);
+            populateValueInFile(filePath, data, false);
         }
     }
 
@@ -188,10 +191,11 @@ public class SessionStatusServiceImpl implements SessionStatusService {
         return sessionRepository.save(session);
     }
 
-    private void populateValueInFile(String filePath, List<String> values) throws IOException {
+    private void populateValueInFile(String filePath, List<String> values,boolean deleteExists) throws IOException {
         File file = new File(filePath);
+        if(deleteExists && file.exists()) file.delete();
         FileUtils.touch(new File(filePath));
-        FileUtils.writeLines(file, values);
+        FileUtils.writeLines(file, values, true);
     }
 
 }
