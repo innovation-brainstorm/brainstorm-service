@@ -30,7 +30,7 @@ public class ValueFromTPDBImpl implements ValueFromTPDB {
             ResultSet resultSet = stat.executeQuery(String.format("select %s from %s limit %d,%d", column, table, start, end));
             while (resultSet.next()) {
                 String value = resultSet.getString(1);
-                res.add(value);
+                res.add("\"" + value + "\"");
             }
         }
         return res;
