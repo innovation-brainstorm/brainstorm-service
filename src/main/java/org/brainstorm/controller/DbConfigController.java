@@ -7,12 +7,9 @@ import org.brainstorm.service.ExMetaData;
 import org.brainstorm.utils.JdbcUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.sql.*;
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -38,7 +35,7 @@ public class DbConfigController {
         return metaData.getUserTableNames(conn);
     }
 
-    @GetMapping("/jdbc/dbDDL")
+    @PostMapping("/jdbc/dbDDL")
     public Map<String, TableInfo> getDbDDL(@RequestBody DataSourceInfo dbConfig) throws SQLException {
         Connection conn = JdbcUtils.getConnection(dbConfig.getUrl(), dbConfig.getUsername(), dbConfig.getPassword());
         return metaData.getAll(conn);
