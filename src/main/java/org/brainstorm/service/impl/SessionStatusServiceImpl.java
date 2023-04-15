@@ -3,6 +3,7 @@ package org.brainstorm.service.impl;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONObject;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.brainstorm.instant.Status;
 import org.brainstorm.interfaces.strategy.DataType;
 import org.brainstorm.interfaces.strategy.DefaultDataType;
@@ -26,8 +27,8 @@ import org.springframework.web.client.RestTemplate;
 import javax.transaction.Transactional;
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
+import java.nio.charset.Charset;
+import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -73,7 +74,6 @@ public class SessionStatusServiceImpl implements SessionStatusService {
 
     @Override
     public void triggerTasks(Session session) {
-        sessionId2unfinishedTasks.put(session.getId(), session.getTasks().size());
         session.setStatus(Status.RUNNING);
 
         List<Task> tasks = session.getTasks();
@@ -87,16 +87,15 @@ public class SessionStatusServiceImpl implements SessionStatusService {
     }
 
     private void startTask(Session session, Task task) {
-        DataType defaultDataType = DefaultDataType.getDefaultDataType(StrategyEnums.values()[task.getStrategy()]);
-        DefaultDataType.setLength((int) session.getExpectedCount());
-
+        DataType defaultDataType = DefaultDataType.getDefaultDataType(StrategyEnums.values()[task.getStrategy()], (int) session.getExpectedCount());
         task.setStatus(Status.RUNNING);
 
         executor.execute(() -> {
             try {
                 StrategyData strategyData = strategyService.generateData(defaultDataType, task.getStrategy());
-                populateValueInFile(ROOT_DIR + File.separator + session.getDirectory() + File.separator + task.getFileName(), Arrays.asList(task.getColumnName()), true);
-                populateValueInFile(ROOT_DIR + File.separator + session.getDirectory() + File.separator + task.getFileName(), strategyData.getData(),false);
+                String filePath = ROOT_DIR + File.separator + session.getDirectory() + File.separator + task.getFileName();
+                populateValueInFile(filePath, Arrays.asList(task.getColumnName()), true);
+                populateValueInFile(filePath, strategyData.getData(), false);
 //                TimeUnit.SECONDS.sleep(2);
 
                 task.setStatus(Status.COMPLETED);
@@ -144,7 +143,7 @@ public class SessionStatusServiceImpl implements SessionStatusService {
     }
 
     private void generateLearningData(String tableName, String columnName, String filePath) throws Exception {
-        populateValueInFile(filePath, Arrays.asList("\"" + columnName + "\""),true);
+        populateValueInFile(filePath, Arrays.asList("\"" + columnName + "\""), true);
         int batchCount = 1000;
         for (int i = 0; i * batchCount <= NUMBER_OF_VALUE_NEEDED_AI; i++) {
             List<String> data = valueFromTPDB.getDataByColumnMySQL(tableName, columnName, i * batchCount, (i + 1) * batchCount);
@@ -156,7 +155,9 @@ public class SessionStatusServiceImpl implements SessionStatusService {
     @Override
     public Session createSessionWithTasks(Session session) {
         if (session.getTasks().isEmpty()) throw new RuntimeException("tasks can't be empty.");
-        return sessionRepository.save(session);
+        Session savedSession = sessionRepository.save(session);
+        sessionId2unfinishedTasks.put(session.getId(), session.getTasks().size());
+        return savedSession;
     }
 
     @Override
@@ -167,14 +168,47 @@ public class SessionStatusServiceImpl implements SessionStatusService {
         //set session completed when all tasks are completed.
         if (Status.COMPLETED.equals(savedTask.getStatus())) {
             Session session = savedTask.getSession();
-            sessionId2unfinishedTasks.computeIfPresent(session.getId(), (k, v) -> --v);
-            System.out.println(sessionId2unfinishedTasks.get(session.getId()));
-            if (sessionId2unfinishedTasks.getOrDefault(session.getId(), -1) == 0) {
-                sessionRepository.updateStatusById(session.getId(), Status.COMPLETED);//it's fine we set multiple times & don't use save, it will change related tasks' status
+            synchronized (this) {
+                sessionId2unfinishedTasks.computeIfPresent(session.getId(), (k, v) -> --v);
+                if (sessionId2unfinishedTasks.getOrDefault(session.getId(), -1) == 0) {
+                    try {
+                        generateTestFile(session);
+                        sessionRepository.updateStatusById(session.getId(), Status.COMPLETED);
+                    } catch (IOException e) {
+                        sessionRepository.updateStatusById(session.getId(), Status.ERROR);
+                    }
+                }
             }
         }
 
         return savedTask;
+    }
+
+    private void generateTestFile(Session session) throws IOException {
+        List<Task> tasks = session.getTasks();
+        List<List<String>> values = new ArrayList<>();
+        for (Task task : tasks) {
+            String filePath = ROOT_DIR + File.separator + session.getDirectory() + File.separator + task.getFileName();
+            File file = new File(filePath);
+            if (!file.exists()) throw new IOException("file not exist.");
+            values.add(FileUtils.readLines(file, Charset.defaultCharset()));
+        }
+
+        StringBuilder sb;
+        String filePath = ROOT_DIR + File.separator + session.getDirectory() + File.separator + "test.csv";
+        int minRow = Integer.MAX_VALUE;
+        for (List<String> value : values) minRow = Math.min(minRow, value.size());
+
+        List<String> insertValues = new ArrayList<>();
+        for (int row = 0; row < minRow; row++) {
+            sb = new StringBuilder();
+            for (int col = 0; col < values.size(); col++) {
+                sb.append(values.get(col).get(row)).append(",");
+            }
+            sb.delete(sb.length() - 1, sb.length());
+            insertValues.add(sb.toString());
+        }
+        populateValueInFile(filePath, insertValues, true);
     }
 
     @Override
@@ -182,7 +216,7 @@ public class SessionStatusServiceImpl implements SessionStatusService {
         if (dto.getTaskId() == null) throw new RuntimeException("taskId can't be null.");
         Task task = taskRepository.findById(dto.getTaskId()).orElseThrow(() -> new RuntimeException(dto.getTaskId() + " not found"));
         task.setStatus(dto.getStatus());
-        task.setFileName(dto.getFilePath());
+        if (StringUtils.isNotBlank(dto.getFilePath())) task.setFileName(dto.getFilePath());
         return updateTask(task);
     }
 
@@ -191,9 +225,10 @@ public class SessionStatusServiceImpl implements SessionStatusService {
         return sessionRepository.save(session);
     }
 
-    private void populateValueInFile(String filePath, List<String> values,boolean deleteExists) throws IOException {
+    private void populateValueInFile(String filePath, List<String> values, boolean deleteExists) throws IOException {
         File file = new File(filePath);
-        if(deleteExists && file.exists()) file.delete();
+        if (deleteExists && file.exists()) file.delete();
+        log.info("file path: {}", file.getAbsolutePath());
         FileUtils.touch(new File(filePath));
         FileUtils.writeLines(file, values, true);
     }

@@ -5,13 +5,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import java.util.ArrayList;
 
 public class DefaultDataType {
-    private static int length = 1000;
-
-    public static void setLength(int length) {
-        DefaultDataType.length = length;
-    }
-
-    public static DataType getDefaultDataType(StrategyEnums strategyEnums) {
+    public static DataType getDefaultDataType(StrategyEnums strategyEnums,int length) {
         String typeName = "Integer";
         switch (strategyEnums) {
             case IncrementalList:
