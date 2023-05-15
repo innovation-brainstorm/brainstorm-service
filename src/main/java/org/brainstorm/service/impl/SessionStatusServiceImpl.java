@@ -8,6 +8,7 @@ import org.brainstorm.instant.Status;
 import org.brainstorm.interfaces.strategy.DataType;
 import org.brainstorm.interfaces.strategy.DefaultDataType;
 import org.brainstorm.interfaces.strategy.StrategyEnums;
+import org.brainstorm.model.MODE;
 import org.brainstorm.model.Session;
 import org.brainstorm.model.Task;
 import org.brainstorm.model.dto.AIUpdateDTO;
@@ -20,15 +21,23 @@ import org.brainstorm.service.StrategyData;
 import org.brainstorm.service.ValueFromTPDB;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.*;
+import org.springframework.jdbc.datasource.init.ScriptException;
+import org.springframework.jdbc.datasource.init.ScriptUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import javax.persistence.EntityManager;
+import javax.sql.DataSource;
 import javax.transaction.Transactional;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.*;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -173,8 +182,12 @@ public class SessionStatusServiceImpl implements SessionStatusService {
                 if (sessionId2unfinishedTasks.getOrDefault(session.getId(), -1) == 0) {
                     try {
                         generateTestFile(session);
+                        if (MODE.insert == session.getDestination()) {
+                            String filePath = ROOT_DIR + File.separator + session.getDirectory() + File.separator + "test.sql";
+                            valueFromTPDB.executeScript(filePath);
+                        }
                         sessionRepository.updateStatusById(session.getId(), Status.COMPLETED);
-                    } catch (IOException e) {
+                    } catch (IOException | ScriptException e) {
                         sessionRepository.updateStatusById(session.getId(), Status.ERROR);
                     }
                 }
@@ -183,6 +196,7 @@ public class SessionStatusServiceImpl implements SessionStatusService {
 
         return savedTask;
     }
+
 
     private void generateTestFile(Session session) throws IOException {
         List<Task> tasks = session.getTasks();
@@ -194,21 +208,53 @@ public class SessionStatusServiceImpl implements SessionStatusService {
             values.add(FileUtils.readLines(file, Charset.defaultCharset()));
         }
 
-        StringBuilder sb;
-        String filePath = ROOT_DIR + File.separator + session.getDirectory() + File.separator + "test.csv";
+        doGenerateFile(values, session, MODE.view);
+        doGenerateFile(values, session, MODE.sql);
+    }
+
+    private void doGenerateFile(List<List<String>> values, Session session, MODE mode) throws IOException {
+        String fileName;
+
         int minRow = Integer.MAX_VALUE;
         for (List<String> value : values) minRow = Math.min(minRow, value.size());
 
+        StringBuilder sb;
         List<String> insertValues = new ArrayList<>();
-        for (int row = 0; row < minRow; row++) {
-            sb = new StringBuilder();
-            for (int col = 0; col < values.size(); col++) {
-                sb.append(values.get(col).get(row)).append(",");
+
+        //insert tableName (col1,col2) values (val1, val2);
+        StringBuilder columns = new StringBuilder();
+        if (mode != MODE.view) {
+            fileName = ROOT_DIR + File.separator + session.getDirectory() + File.separator + "test.sql";
+
+            for (List<String> value : values) {
+                columns.append(value.get(0)).append(",");
             }
-            sb.delete(sb.length() - 1, sb.length());
-            insertValues.add(sb.toString());
+            columns.delete(columns.length() - 1, columns.length());
+            for (int row = 1; row < minRow; row++) {
+                sb = new StringBuilder();
+
+                sb.append("insert " + session.getTheSchema() + "." + session.getTableName() + " (" + columns + ") values (");
+                for (int col = 0; col < values.size(); col++) {
+                    sb.append(values.get(col).get(row)).append(",");
+                }
+                sb.delete(sb.length() - 1, sb.length());
+                sb.append(");");
+
+                insertValues.add(sb.toString());
+            }
+        } else {
+            fileName = ROOT_DIR + File.separator + session.getDirectory() + File.separator + "test.csv";
+
+            for (int row = 0; row < minRow; row++) {
+                sb = new StringBuilder();
+                for (int col = 0; col < values.size(); col++) {
+                    sb.append(values.get(col).get(row)).append(",");
+                }
+                sb.delete(sb.length() - 1, sb.length());
+                insertValues.add(sb.toString());
+            }
         }
-        populateValueInFile(filePath, insertValues, true);
+        populateValueInFile(fileName, insertValues, true);
     }
 
     @Override
