@@ -3,6 +3,7 @@ package org.brainstorm.controller;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.brainstorm.instant.Status;
+import org.brainstorm.model.MODE;
 import org.brainstorm.model.Session;
 import org.brainstorm.model.Task;
 import org.brainstorm.model.dto.*;
@@ -66,11 +67,14 @@ public class SessionStatusController {
                     header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=error.csv").
                     contentType(MediaType.valueOf("application/x-msdownload; chatset=utf-8")).
                     body(new ClassPathResource("error.csv"));
-        else
+        else{
+            String filename = "test.csv";
+            if (MODE.view != session.getDestination()) filename = "test.sql";
             return ResponseEntity.ok().
-                    header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=test.csv").
+                    header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename).
                     contentType(MediaType.valueOf("application/x-msdownload; chatset=utf-8")).
-                    body(new FileSystemResource(ROOT_DIR + File.separator + session.getDirectory() + File.separator + "test.csv"));
+                    body(new FileSystemResource(ROOT_DIR + File.separator + session.getDirectory() + File.separator + filename));
+        }
     }
 
     //for test
@@ -78,12 +82,12 @@ public class SessionStatusController {
     public TaskResponseDto createTask(@RequestBody TaskInfoDTO taskInfoDTO) throws IOException {
         ArrayList<String> values = new ArrayList<>();
         values.add(taskInfoDTO.getColumnName());
-        for (int i = 0; i <taskInfoDTO.getExpectedCount(); i++) {
+        for (int i = 0; i < taskInfoDTO.getExpectedCount(); i++) {
             values.add(i + "");
         }
         String filePath = taskInfoDTO.getFilePath();
         String fileName = filePath.substring(filePath.lastIndexOf(File.separator) + 1);
-        String dir = filePath.substring(0, filePath.length() - fileName.length()-1);
+        String dir = filePath.substring(0, filePath.length() - fileName.length() - 1);
         dir = dir.substring(0, dir.lastIndexOf(File.separator));
         FileUtils.writeLines(new File(dir + File.separator + taskInfoDTO.getColumnName() + ".csv"), values);
         return new TaskResponseDto(taskInfoDTO.getSessionId(), taskInfoDTO.getTaskId(), Status.RUNNING);

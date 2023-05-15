@@ -3,7 +3,8 @@ package org.brainstorm.service.impl;
 import lombok.extern.slf4j.Slf4j;
 import org.brainstorm.model.dto.DataBaseConnectionInfoDTO;
 import org.brainstorm.service.ValueFromTPDB;
-import org.springframework.context.annotation.Scope;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.jdbc.datasource.init.ScriptUtils;
 import org.springframework.stereotype.Component;
 
 import java.sql.*;
@@ -34,5 +35,11 @@ public class ValueFromTPDBImpl implements ValueFromTPDB {
             }
         }
         return res;
+    }
+
+    @Override
+    public void executeScript(String filePath) {
+        FileSystemResource resource = new FileSystemResource(filePath);
+        ScriptUtils.executeSqlScript(connection, resource);
     }
 }
