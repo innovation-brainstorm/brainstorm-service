@@ -188,6 +188,7 @@ public class SessionStatusServiceImpl implements SessionStatusService {
                         }
                         sessionRepository.updateStatusById(session.getId(), Status.COMPLETED);
                     } catch (IOException | ScriptException e) {
+                        log.error(e.getMessage());
                         sessionRepository.updateStatusById(session.getId(), Status.ERROR);
                     }
                 }
@@ -230,12 +231,13 @@ public class SessionStatusServiceImpl implements SessionStatusService {
                 columns.append(value.get(0)).append(",");
             }
             columns.delete(columns.length() - 1, columns.length());
+
             for (int row = 1; row < minRow; row++) {
                 sb = new StringBuilder();
 
                 sb.append("insert " + session.getTheSchema() + "." + session.getTableName() + " (" + columns + ") values (");
                 for (int col = 0; col < values.size(); col++) {
-                    sb.append(values.get(col).get(row)).append(",");
+                    sb.append("'").append(values.get(col).get(row)).append("'").append(",");
                 }
                 sb.delete(sb.length() - 1, sb.length());
                 sb.append(");");
