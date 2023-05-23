@@ -3,6 +3,7 @@ package org.brainstorm.service.impl;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.brainstorm.datasource.modle.*;
+import org.brainstorm.datasource.modle.Record;
 import org.brainstorm.service.DataSourceService;
 import org.brainstorm.utils.JdbcUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,7 +35,7 @@ public class DataSourceServiceImpl implements DataSourceService {
 		String sql = genData(data);
 	}
 
-	public List<Record> getData(DataSourceInfo dataSourceInfo,String tableName){
+	public List<Record> getData(DataSourceInfo dataSourceInfo, String tableName){
 		Connection connection = null;
 		Statement statement = null;
 		ResultSet resultSet = null;

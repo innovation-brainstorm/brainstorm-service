@@ -31,7 +31,7 @@ class SessionStatusControllerTest {
                 "    {\"name\": \"id\", \"strategy\": 0}\n" +
                 "  ]\n" +
                 "}", NewSessionDto.class);
-        ResponseEntity<ResponseDto> entity = restTemplate.postForEntity("http://localhost:8080/api/session/generatedData", request, ResponseDto.class);
+        ResponseEntity<ResponseDto> entity = restTemplate.postForEntity("http://localhost:8081/api/session/generatedData", request, ResponseDto.class);
         System.out.println(entity.getBody().getData());
         Assert.assertNotNull(entity);
     }
@@ -50,7 +50,7 @@ class SessionStatusControllerTest {
                 "    \"filePath\":\"id.csv\"\n" +
                 "}", AIUpdateDTO.class);
 
-        ResponseEntity<ResponseDto> entity = restTemplate.postForEntity("http://localhost:8080/api/task/updateStatus", request, ResponseDto.class);
+        ResponseEntity<ResponseDto> entity = restTemplate.postForEntity("http://localhost:8081/api/task/updateStatus", request, ResponseDto.class);
         Assert.assertNotNull(entity);
     }
 }
