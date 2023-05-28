@@ -205,7 +205,7 @@ public class SessionStatusServiceImpl implements SessionStatusService {
         for (Task task : tasks) {
             String filePath = ROOT_DIR + File.separator + session.getDirectory() + File.separator + task.getFileName();
             File file = new File(filePath);
-            if (!file.exists()) throw new IOException("file not exist.");
+            if (!file.exists()) throw new IOException(filePath + ": does not exist.");
             values.add(FileUtils.readLines(file, Charset.defaultCharset()));
         }
 
@@ -264,7 +264,8 @@ public class SessionStatusServiceImpl implements SessionStatusService {
         if (dto.getTaskId() == null) throw new RuntimeException("taskId can't be null.");
         Task task = taskRepository.findById(dto.getTaskId()).orElseThrow(() -> new RuntimeException(dto.getTaskId() + " not found"));
         task.setStatus(dto.getStatus());
-        if (StringUtils.isNotBlank(dto.getFilePath())) task.setFileName(dto.getFilePath());
+        String filePath = dto.getFilePath();
+        if (StringUtils.isNotBlank(filePath)) task.setFileName(filePath.substring(filePath.lastIndexOf(File.separator) + 1));
         return updateTask(task);
     }
 
