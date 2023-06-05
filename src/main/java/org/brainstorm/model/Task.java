@@ -34,6 +34,10 @@ public class Task {
     @Enumerated(EnumType.STRING)
     private Status status = Status.NEW;
 
+    private boolean isPretrained;
+
+    private String modelId;
+
     public Task(Session session) {
         this.session = session;
     }

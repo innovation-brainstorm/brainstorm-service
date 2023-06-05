@@ -15,4 +15,6 @@ public class TaskInfoDTO {
     private Long expectedCount;
     private Status status;
     private String filePath;
+    private String modelId;
+    private boolean usingExistModel;
 }

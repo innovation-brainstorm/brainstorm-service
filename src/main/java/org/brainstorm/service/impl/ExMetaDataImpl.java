@@ -1,18 +1,25 @@
 package org.brainstorm.service.impl;
 
+import com.mysql.cj.jdbc.ConnectionImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.brainstorm.datasource.modle.Column;
 import org.brainstorm.datasource.modle.ForeignKey;
 import org.brainstorm.datasource.modle.PrimaryKey;
 import org.brainstorm.datasource.modle.TableInfo;
+import org.brainstorm.instant.Status;
 import org.brainstorm.interfaces.strategy.DataType;
 import org.brainstorm.interfaces.strategy.Strategy;
+import org.brainstorm.model.dto.TaskResponseDto;
 import org.brainstorm.service.DataGenerateStrategyService;
 import org.brainstorm.service.ExMetaData;
 import org.brainstorm.utils.JsonUtils;
 import org.hibernate.type.DateType;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -23,6 +30,11 @@ import java.util.*;
 @Service
 @Slf4j
 public class ExMetaDataImpl implements ExMetaData {
+    @Value("${AI.CHECK.MODEL.URL}")
+    private String AI_CHECK_MODEL_URL;
+
+    @Autowired
+    private RestTemplate restTemplate;
 
     @Autowired
     private DataGenerateStrategyService dataGenerateStrategyService;
@@ -46,6 +58,30 @@ public class ExMetaDataImpl implements ExMetaData {
             TableInfo tableInfo = getTableInfo(conn,userTableName);
             res.put(userTableName,tableInfo);
         }
+
+        //check if model already exist for given column
+        Properties properties = ((ConnectionImpl) conn).getProperties();
+        String host = String.valueOf(properties.get("host"));
+        String port = String.valueOf(properties.get("port"));
+        String database = String.valueOf(properties.get("dbname"));
+        String modelId = host.replace('.', '-') + "-" + port + "-" + database;
+
+        for (String userTableName : userTableNames) {
+            TableInfo tableInfo = res.get(userTableName);
+            if(tableInfo == null) continue;
+
+            for (Column column : tableInfo.getColumnList()) {
+                if(column.getIsAutoincrement()) continue;
+                String specificModelId = modelId + "_" + userTableName + "_" + column.getColumnName();
+                column.setModelId(specificModelId);
+                ResponseEntity<Boolean> responseEntity = restTemplate.getForEntity(AI_CHECK_MODEL_URL, Boolean.class, specificModelId);
+                if (HttpStatus.OK == responseEntity.getStatusCode()) {
+                    Boolean body = responseEntity.getBody();
+                    column.setPretrained(body);
+                }
+            }
+        }
+
         return res;
     }
 

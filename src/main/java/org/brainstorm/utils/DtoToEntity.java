@@ -23,6 +23,8 @@ public class DtoToEntity {
             task.setColumnName(column.getName());
             task.setGeneratedByAI(column.getStrategy() == 0);
             task.setStrategy(column.getStrategy());
+            task.setModelId(column.getModelId());
+            task.setPretrained(column.getIsPretrained());
             tasks.add(task);
         }
         session.setTasks(tasks);

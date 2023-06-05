@@ -80,6 +80,9 @@ public class SessionStatusController {
     //for test
     @PostMapping("/task/createTask")
     public TaskResponseDto createTask(@RequestBody TaskInfoDTO taskInfoDTO) throws IOException {
+        System.out.println(taskInfoDTO.getModelId());
+        System.out.println(taskInfoDTO.isUsingExistModel());
+
         ArrayList<String> values = new ArrayList<>();
         values.add(taskInfoDTO.getColumnName());
         for (int i = 0; i < taskInfoDTO.getExpectedCount(); i++) {
@@ -91,5 +94,12 @@ public class SessionStatusController {
         dir = dir.substring(0, dir.lastIndexOf(File.separator));
         FileUtils.writeLines(new File(dir + File.separator + taskInfoDTO.getColumnName() + ".csv"), values);
         return new TaskResponseDto(taskInfoDTO.getSessionId(), taskInfoDTO.getTaskId(), Status.RUNNING);
+    }
+
+    //for test
+    @GetMapping("/task/model/{modelId}")
+    public Boolean createTask(@PathVariable String modelId) {
+        System.out.println(modelId);
+        return true;
     }
 }
