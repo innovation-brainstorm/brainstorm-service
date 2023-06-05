@@ -32,6 +32,12 @@ public class Column extends BaseColumn {
    @JsonDeserialize(using = YesNoDeserializer.class)
    private Boolean isGeneratedcolumn;
 
+   @JsonProperty("IS_PRETRAINED")
+   private boolean pretrained;
+
+   @JsonProperty("MODEL_ID")
+   private String modelId;
+
    private Map<Integer,String> Strategies;
 
 

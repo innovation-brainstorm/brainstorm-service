@@ -21,20 +21,15 @@ import org.brainstorm.service.StrategyData;
 import org.brainstorm.service.ValueFromTPDB;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.*;
 import org.springframework.jdbc.datasource.init.ScriptException;
-import org.springframework.jdbc.datasource.init.ScriptUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import javax.persistence.EntityManager;
-import javax.sql.DataSource;
 import javax.transaction.Transactional;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -47,8 +42,8 @@ import java.util.concurrent.TimeUnit;
 @Transactional
 @Slf4j
 public class SessionStatusServiceImpl implements SessionStatusService {
-    @Value("${AI.URL}")
-    private String URL_AI;
+    @Value("${AI.CREATE.TASK.URL}")
+    private String AI_CREATE_TASK_URL;
 
     @Value("${AI.NUMBER.OF.VALUE.NEEDED}")
     private Long NUMBER_OF_VALUE_NEEDED_AI;
@@ -137,9 +132,11 @@ public class SessionStatusServiceImpl implements SessionStatusService {
         taskInfo.put("expectedCount", session.getExpectedCount());
         taskInfo.put("status", task.getStatus());
         taskInfo.put("filePath", path);
+        taskInfo.put("modelId", task.getModelId());
+        taskInfo.put("usingExistModel", task.isPretrained());
         HttpEntity<String> request = new HttpEntity<>(taskInfo.toString(), headers);
 
-        ResponseEntity<TaskResponseDto> responseEntity = restTemplate.postForEntity(URL_AI, request, TaskResponseDto.class);
+        ResponseEntity<TaskResponseDto> responseEntity = restTemplate.postForEntity(AI_CREATE_TASK_URL, request, TaskResponseDto.class);
         if (HttpStatus.OK == responseEntity.getStatusCode()) {
             TaskResponseDto body = responseEntity.getBody();
             task.setStatus(body.getStatus());
@@ -265,7 +262,8 @@ public class SessionStatusServiceImpl implements SessionStatusService {
         Task task = taskRepository.findById(dto.getTaskId()).orElseThrow(() -> new RuntimeException(dto.getTaskId() + " not found"));
         task.setStatus(dto.getStatus());
         String filePath = dto.getFilePath();
-        if (StringUtils.isNotBlank(filePath)) task.setFileName(filePath.substring(filePath.lastIndexOf(File.separator) + 1));
+        if (StringUtils.isNotBlank(filePath))
+            task.setFileName(filePath.substring(filePath.lastIndexOf(File.separator) + 1));
         return updateTask(task);
     }
 
