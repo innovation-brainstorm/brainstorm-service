@@ -1,5 +1,5 @@
 # 该镜像需要依赖的基础镜像
-FROM --platform=linux/amd64 openjdk:8
+FROM openjdk:8
 USER root
 WORKDIR /root/
 ARG JAR_FILE=/target/\*.jar
