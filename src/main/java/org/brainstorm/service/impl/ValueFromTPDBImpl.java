@@ -38,8 +38,9 @@ public class ValueFromTPDBImpl implements ValueFromTPDB {
     }
 
     @Override
-    public void executeScript(String filePath) {
+    public void executeScript(String filePath) throws SQLException {
         FileSystemResource resource = new FileSystemResource(filePath);
         ScriptUtils.executeSqlScript(connection, resource);
+        if (!connection.getAutoCommit()) connection.commit();
     }
 }

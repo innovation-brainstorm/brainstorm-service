@@ -59,6 +59,34 @@ public class SessionStatusController {
         return new ResponseDto<>(true, session);
     }
 
+    @PostMapping("/session/insert/{id}")
+    public ResponseDto<Boolean> generatedData(@PathVariable Long id) {
+        Session session = sessionStatusService.getSessionById(id);
+        Status status = session.getStatus();
+        if (Status.COMPLETED != status)
+            return new ResponseDto<>(false, "This session " + id + " has not completed or failed.");
+
+        log.info("start inserting data into and tasks created.");
+        boolean succeed = sessionStatusService.insertIntoDatabase(session);
+
+        return new ResponseDto<>(succeed, null);
+    }
+
+    @PostMapping("/session/clearAll")
+    public ResponseDto<Boolean> generatedData() {
+        try {
+            File file = new File(ROOT_DIR);
+            if (file.exists()) {
+                FileUtils.deleteDirectory(file);
+            }
+        } catch (Exception e) {
+            log.error("clear failed", e);
+            return new ResponseDto<>(false, null);
+        }
+        return new ResponseDto<>(true, null);
+    }
+
+
     @GetMapping("/session/download/{id}")
     public ResponseEntity<Resource> download(@PathVariable Long id) {
         Session session = sessionStatusService.getSessionById(id);
@@ -67,9 +95,9 @@ public class SessionStatusController {
                     header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=error.csv").
                     contentType(MediaType.valueOf("application/x-msdownload; chatset=utf-8")).
                     body(new ClassPathResource("error.csv"));
-        else{
-            String filename = "test.csv";
-            if (MODE.view != session.getDestination()) filename = "test.sql";
+        else {
+            String filename = id + ".csv";
+            if (MODE.view != session.getDestination()) filename = id + ".sql";
             return ResponseEntity.ok().
                     header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename).
                     contentType(MediaType.valueOf("application/x-msdownload; chatset=utf-8")).
