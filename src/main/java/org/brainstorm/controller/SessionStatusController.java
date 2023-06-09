@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 @RestController
 @Slf4j
@@ -87,21 +88,21 @@ public class SessionStatusController {
     }
 
 
-    @GetMapping("/session/download/{id}")
-    public ResponseEntity<Resource> download(@PathVariable Long id) {
+    @GetMapping("/session/download/{type}/{id}")
+    public ResponseEntity<Resource> download(@PathVariable String type, @PathVariable Long id) {
         Session session = sessionStatusService.getSessionById(id);
-        if (!Status.COMPLETED.equals(session.getStatus()))
+        String filename = id + "." + type;
+        String path = ROOT_DIR + File.separator + session.getDirectory() + File.separator + filename;
+        if (!Status.COMPLETED.equals(session.getStatus()) || !Arrays.asList("csv", "sql").contains(type) || !new File(path).exists())
             return ResponseEntity.ok().
                     header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=error.csv").
                     contentType(MediaType.valueOf("application/x-msdownload; chatset=utf-8")).
                     body(new ClassPathResource("error.csv"));
         else {
-            String filename = id + ".csv";
-            if (MODE.view != session.getDestination()) filename = id + ".sql";
             return ResponseEntity.ok().
                     header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename).
                     contentType(MediaType.valueOf("application/x-msdownload; chatset=utf-8")).
-                    body(new FileSystemResource(ROOT_DIR + File.separator + session.getDirectory() + File.separator + filename));
+                    body(new FileSystemResource(path));
         }
     }
 
