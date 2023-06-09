@@ -13,6 +13,8 @@ public interface SessionStatusService {
 
     Task updateTask(Task task);
 
+    boolean insertIntoDatabase(Session session);
+
     Task updateTask(AIUpdateDTO dto) ;
 
     Session updateSession(Session session);

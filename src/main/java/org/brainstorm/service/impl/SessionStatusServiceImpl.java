@@ -100,7 +100,6 @@ public class SessionStatusServiceImpl implements SessionStatusService {
                 String filePath = ROOT_DIR + File.separator + session.getDirectory() + File.separator + task.getFileName();
                 populateValueInFile(filePath, Arrays.asList(task.getColumnName()), true);
                 populateValueInFile(filePath, strategyData.getData(), false);
-//                TimeUnit.SECONDS.sleep(2);
 
                 task.setStatus(Status.COMPLETED);
                 updateTask(task);
@@ -119,7 +118,7 @@ public class SessionStatusServiceImpl implements SessionStatusService {
 
         String path = ROOT_DIR + File.separator + session.getDirectory() + File.separator + "learning" + File.separator + task.getFileName();
         try {
-            generateLearningData(session.getTableName(), task.getColumnName(), path);
+            if(!task.isPretrained()) generateLearningData(session.getTableName(), task.getColumnName(), path);
         } catch (Exception e) {
             task.setStatus(Status.ERROR);
             return;
@@ -136,8 +135,10 @@ public class SessionStatusServiceImpl implements SessionStatusService {
         taskInfo.put("usingExistModel", task.isPretrained());
         HttpEntity<String> request = new HttpEntity<>(taskInfo.toString(), headers);
 
+        log.info("columnName: {}, call ML service...", task.getColumnName());
         ResponseEntity<TaskResponseDto> responseEntity = restTemplate.postForEntity(AI_CREATE_TASK_URL, request, TaskResponseDto.class);
         if (HttpStatus.OK == responseEntity.getStatusCode()) {
+            log.info("columnName: {}, ML service responded with OK.", task.getColumnName());
             TaskResponseDto body = responseEntity.getBody();
             task.setStatus(body.getStatus());
         } else {
@@ -170,29 +171,39 @@ public class SessionStatusServiceImpl implements SessionStatusService {
     public Task updateTask(Task task) {
         if (task.getId() == null) throw new RuntimeException("taskId can't be null.");
         Task savedTask = taskRepository.save(task);
+        Session session = savedTask.getSession();
+
+        if (Status.ERROR == savedTask.getStatus()) {
+            sessionId2unfinishedTasks.remove(session.getId());
+            sessionRepository.updateStatusById(session.getId(), Status.ERROR);
+        }
 
         //set session completed when all tasks are completed.
-        if (Status.COMPLETED.equals(savedTask.getStatus())) {
-            Session session = savedTask.getSession();
-            synchronized (this) {
-                sessionId2unfinishedTasks.computeIfPresent(session.getId(), (k, v) -> --v);
-                if (sessionId2unfinishedTasks.getOrDefault(session.getId(), -1) == 0) {
-                    try {
-                        generateTestFile(session);
-                        if (MODE.insert == session.getDestination()) {
-                            String filePath = ROOT_DIR + File.separator + session.getDirectory() + File.separator + "test.sql";
-                            valueFromTPDB.executeScript(filePath);
-                        }
-                        sessionRepository.updateStatusById(session.getId(), Status.COMPLETED);
-                    } catch (IOException | ScriptException e) {
-                        log.error(e.getMessage());
-                        sessionRepository.updateStatusById(session.getId(), Status.ERROR);
-                    }
+        if (Status.COMPLETED == savedTask.getStatus()) {
+            if (sessionId2unfinishedTasks.computeIfPresent(session.getId(), (k, v) -> --v) == 0) {
+                try {
+                    generateTestFile(session);
+                    sessionRepository.updateStatusById(session.getId(), Status.COMPLETED);
+                } catch (IOException | ScriptException e) {
+                    log.error(e.getMessage());
+                    sessionRepository.updateStatusById(session.getId(), Status.ERROR);
                 }
             }
         }
 
         return savedTask;
+    }
+
+    @Override
+    public boolean insertIntoDatabase(Session session) {
+        String filePath = ROOT_DIR + File.separator + session.getDirectory() + File.separator + session.getId() + ".sql";
+        try {
+            valueFromTPDB.executeScript(filePath);
+        } catch (Exception e) {
+            log.error("insert into db failed!", e);
+            return false;
+        }
+        return true;
     }
 
 
@@ -222,7 +233,7 @@ public class SessionStatusServiceImpl implements SessionStatusService {
         //insert tableName (col1,col2) values (val1, val2);
         StringBuilder columns = new StringBuilder();
         if (mode != MODE.view) {
-            fileName = ROOT_DIR + File.separator + session.getDirectory() + File.separator + "test.sql";
+            fileName = ROOT_DIR + File.separator + session.getDirectory() + File.separator + session.getId() + ".sql";
 
             for (List<String> value : values) {
                 columns.append(value.get(0)).append(",");
@@ -242,7 +253,7 @@ public class SessionStatusServiceImpl implements SessionStatusService {
                 insertValues.add(sb.toString());
             }
         } else {
-            fileName = ROOT_DIR + File.separator + session.getDirectory() + File.separator + "test.csv";
+            fileName = ROOT_DIR + File.separator + session.getDirectory() + File.separator + session.getId() + ".csv";
 
             for (int row = 0; row < minRow; row++) {
                 sb = new StringBuilder();

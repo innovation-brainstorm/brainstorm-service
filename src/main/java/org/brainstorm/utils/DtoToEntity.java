@@ -24,7 +24,7 @@ public class DtoToEntity {
             task.setGeneratedByAI(column.getStrategy() == 0);
             task.setStrategy(column.getStrategy());
             task.setModelId(column.getModelId());
-            task.setPretrained(column.getIsPretrained());
+            task.setPretrained(column.getIsPretrained() == null ? false : column.getIsPretrained());
             tasks.add(task);
         }
         session.setTasks(tasks);

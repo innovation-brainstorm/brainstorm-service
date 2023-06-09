@@ -21,14 +21,13 @@ class SessionStatusControllerTest {
 
         ObjectMapper mapper = new ObjectMapper();
         NewSessionDto request = mapper.readValue("{\n" +
-                "  \"schema\": \"brainstorm\",\n" +
+                "  \"schema\": \"other_db_mock\",\n" +
                 "  \"table\": \"student\",\n" +
                 "  \"quantity\": 4,\n" +
                 "  \"destination\": \"view\",\n" +
                 "  \"columns\": [\n" +
                 "    {\"name\": \"name\", \"strategy\": 2},\n" +
-                "    {\"name\": \"age\", \"strategy\": 1},\n" +
-                "    {\"name\": \"id\", \"strategy\": 0}\n" +
+                "    {\"name\": \"age\", \"strategy\": 1}\n" +
                 "  ]\n" +
                 "}", NewSessionDto.class);
         ResponseEntity<ResponseDto> entity = restTemplate.postForEntity("http://localhost:8081/api/session/generatedData", request, ResponseDto.class);
@@ -43,7 +42,7 @@ class SessionStatusControllerTest {
         ObjectMapper mapper = new ObjectMapper();
         AIUpdateDTO request = mapper.readValue("{\n" +
                 "    \"sessionId\":117,\n" +
-                "    \"taskId\":399,\n" +
+                "    \"taskId\":371,\n" +
                 "    \"columnName\":\"columnName2\",\n" +
                 "    \"actualCount\":1000,\n" +
                 "    \"status\":\"COMPLETED\",\n" +

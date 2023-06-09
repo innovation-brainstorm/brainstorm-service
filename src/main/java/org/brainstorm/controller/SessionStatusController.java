@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 @RestController
 @Slf4j
@@ -59,21 +60,49 @@ public class SessionStatusController {
         return new ResponseDto<>(true, session);
     }
 
-    @GetMapping("/session/download/{id}")
-    public ResponseEntity<Resource> download(@PathVariable Long id) {
+    @PostMapping("/session/insert/{id}")
+    public ResponseDto<Boolean> generatedData(@PathVariable Long id) {
         Session session = sessionStatusService.getSessionById(id);
-        if (!Status.COMPLETED.equals(session.getStatus()))
+        Status status = session.getStatus();
+        if (Status.COMPLETED != status)
+            return new ResponseDto<>(false, "This session " + id + " has not completed or failed.");
+
+        log.info("start inserting data into and tasks created.");
+        boolean succeed = sessionStatusService.insertIntoDatabase(session);
+
+        return new ResponseDto<>(succeed, null);
+    }
+
+    @PostMapping("/session/clearAll")
+    public ResponseDto<Boolean> generatedData() {
+        try {
+            File file = new File(ROOT_DIR);
+            if (file.exists()) {
+                FileUtils.deleteDirectory(file);
+            }
+        } catch (Exception e) {
+            log.error("clear failed", e);
+            return new ResponseDto<>(false, null);
+        }
+        return new ResponseDto<>(true, null);
+    }
+
+
+    @GetMapping("/session/download/{type}/{id}")
+    public ResponseEntity<Resource> download(@PathVariable String type, @PathVariable Long id) {
+        Session session = sessionStatusService.getSessionById(id);
+        String filename = id + "." + type;
+        String path = ROOT_DIR + File.separator + session.getDirectory() + File.separator + filename;
+        if (!Status.COMPLETED.equals(session.getStatus()) || !Arrays.asList("csv", "sql").contains(type) || !new File(path).exists())
             return ResponseEntity.ok().
                     header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=error.csv").
                     contentType(MediaType.valueOf("application/x-msdownload; chatset=utf-8")).
                     body(new ClassPathResource("error.csv"));
-        else{
-            String filename = "test.csv";
-            if (MODE.view != session.getDestination()) filename = "test.sql";
+        else {
             return ResponseEntity.ok().
                     header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename).
                     contentType(MediaType.valueOf("application/x-msdownload; chatset=utf-8")).
-                    body(new FileSystemResource(ROOT_DIR + File.separator + session.getDirectory() + File.separator + filename));
+                    body(new FileSystemResource(path));
         }
     }
 
