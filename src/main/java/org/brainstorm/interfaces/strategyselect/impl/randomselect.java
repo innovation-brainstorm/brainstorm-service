@@ -11,6 +11,17 @@ import java.util.List;
 public class randomselect implements Strategy {
     @Autowired
     private ValueFromTPDBImpl valueFromTPDB;
+
+    @Override
+    public String getStrategyName() {
+        return "randomselect";
+    }
+
+    @Override
+    public int getIdentifier() {
+        return 2;
+    }
+
     @Override
     public List<String> dataselected(String column, String table, long quantity) throws SQLException {
         String statement = String.format("select %s from %s ORDER BY RAND() limit %d", column, table,quantity);

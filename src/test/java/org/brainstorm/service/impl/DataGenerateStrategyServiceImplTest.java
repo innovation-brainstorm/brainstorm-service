@@ -1,6 +1,6 @@
 package org.brainstorm.service.impl;
 
-import org.brainstorm.interfaces.strategy.DataType;
+
 import org.brainstorm.service.StrategyData;
 import org.junit.Assert;
 import org.junit.jupiter.api.Test;
@@ -15,7 +15,7 @@ class DataGenerateStrategyServiceImplTest {
 
     @Test
     public void testGetAllSupportStrategy() {
-        DataType dataType = new DataType("Integer");
+        //DataType dataType = new DataType("Integer");
         Assert.assertEquals(5, strategyService.getAllSupportStrategy().size());
         System.out.println(strategyService.getAllSupportStrategy());
     }

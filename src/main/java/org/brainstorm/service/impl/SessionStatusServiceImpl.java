@@ -5,9 +5,7 @@ import net.minidev.json.JSONObject;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.brainstorm.instant.Status;
-import org.brainstorm.interfaces.strategy.DataType;
-import org.brainstorm.interfaces.strategy.DefaultDataType;
-import org.brainstorm.interfaces.strategy.StrategyEnums;
+
 import org.brainstorm.model.MODE;
 import org.brainstorm.model.Session;
 import org.brainstorm.model.Task;
@@ -91,7 +89,7 @@ public class SessionStatusServiceImpl implements SessionStatusService {
     }
 
     private void startTask(Session session, Task task) {
-        DataType defaultDataType = DefaultDataType.getDefaultDataType(StrategyEnums.values()[task.getStrategy()], (int) session.getExpectedCount());
+        //DataType defaultDataType = DefaultDataType.getDefaultDataType(StrategyEnums.values()[task.getStrategy()], (int) session.getExpectedCount());
         task.setStatus(Status.RUNNING);
 
         executor.execute(() -> {

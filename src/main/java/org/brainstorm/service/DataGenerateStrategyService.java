@@ -1,6 +1,6 @@
 package org.brainstorm.service;
 
-import org.brainstorm.interfaces.strategy.Strategy;
+import org.brainstorm.interfaces.strategyselect.Strategy;
 import org.brainstorm.model.Session;
 import org.brainstorm.model.Task;
 

@@ -12,6 +12,16 @@ public class Incremental implements Strategy {
     @Autowired
     private ValueFromTPDBImpl valueFromTPDB;
     @Override
+    public String getStrategyName() {
+        return "Incremental";
+    }
+
+    @Override
+    public int getIdentifier() {
+        return 1;
+    }
+
+    @Override
     public List<String> dataselected(String column, String table, long quantity) throws SQLException {
         String statement=String.format("select %s from (select %s from %s ORDER BY RAND() limit %d) as tab order by %s"
                 ,column, column,table,quantity,column);

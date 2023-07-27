@@ -5,5 +5,10 @@ import java.util.List;
 
 
 public interface Strategy {
+    int getIdentifier();
+
+    String getStrategyName();
+
+
     List<String> dataselected(String column, String table, long quantity) throws SQLException;
 }
