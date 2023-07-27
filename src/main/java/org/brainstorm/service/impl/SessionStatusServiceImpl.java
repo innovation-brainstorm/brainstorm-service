@@ -96,7 +96,7 @@ public class SessionStatusServiceImpl implements SessionStatusService {
 
         executor.execute(() -> {
             try {
-                StrategyData strategyData = strategyService.generateData(defaultDataType, task.getStrategy());
+                StrategyData strategyData = strategyService.generateData(session,task);
                 String filePath = ROOT_DIR + File.separator + session.getDirectory() + File.separator + task.getFileName();
                 populateValueInFile(filePath, Arrays.asList(task.getColumnName()), true);
                 populateValueInFile(filePath, strategyData.getData(), false);
@@ -118,7 +118,10 @@ public class SessionStatusServiceImpl implements SessionStatusService {
 
         String path = ROOT_DIR + File.separator + session.getDirectory() + File.separator + "learning" + File.separator + task.getFileName();
         try {
-            if(!task.isPretrained()) generateLearningData(session.getTableName(), task.getColumnName(), path);
+            if(!task.isPretrained()) {
+                generateLearningData(session.getTableName(), task.getColumnName(), path);
+            }
+
         } catch (Exception e) {
             task.setStatus(Status.ERROR);
             return;
@@ -136,6 +139,7 @@ public class SessionStatusServiceImpl implements SessionStatusService {
         HttpEntity<String> request = new HttpEntity<>(taskInfo.toString(), headers);
 
         log.info("columnName: {}, call ML service...", task.getColumnName());
+        //请求ml server
         ResponseEntity<TaskResponseDto> responseEntity = restTemplate.postForEntity(AI_CREATE_TASK_URL, request, TaskResponseDto.class);
         if (HttpStatus.OK == responseEntity.getStatusCode()) {
             log.info("columnName: {}, ML service responded with OK.", task.getColumnName());
@@ -180,6 +184,7 @@ public class SessionStatusServiceImpl implements SessionStatusService {
 
         //set session completed when all tasks are completed.
         if (Status.COMPLETED == savedTask.getStatus()) {
+            //evert time complete a task,reset the currenthashmap value-1,and when zero,save session
             if (sessionId2unfinishedTasks.computeIfPresent(session.getId(), (k, v) -> --v) == 0) {
                 try {
                     generateTestFile(session);

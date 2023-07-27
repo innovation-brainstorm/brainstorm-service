@@ -38,6 +38,19 @@ public class ValueFromTPDBImpl implements ValueFromTPDB {
     }
 
     @Override
+    public List<String> selectDataByStatement(String statement) throws SQLException {
+        ArrayList<String> res = new ArrayList<>();
+        try (Statement stat = connection.createStatement()) {
+            ResultSet resultSet = stat.executeQuery(statement);
+            while (resultSet.next()) {
+                String value = resultSet.getString(1);
+                res.add("\"" + value + "\"");
+            }
+        }
+        return res;
+    }
+
+    @Override
     public void executeScript(String filePath) throws SQLException {
         FileSystemResource resource = new FileSystemResource(filePath);
         ScriptUtils.executeSqlScript(connection, resource);

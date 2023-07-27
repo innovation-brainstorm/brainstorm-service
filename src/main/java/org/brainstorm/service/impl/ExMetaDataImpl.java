@@ -6,14 +6,11 @@ import org.brainstorm.datasource.modle.Column;
 import org.brainstorm.datasource.modle.ForeignKey;
 import org.brainstorm.datasource.modle.PrimaryKey;
 import org.brainstorm.datasource.modle.TableInfo;
-import org.brainstorm.instant.Status;
 import org.brainstorm.interfaces.strategy.DataType;
 import org.brainstorm.interfaces.strategy.Strategy;
-import org.brainstorm.model.dto.TaskResponseDto;
 import org.brainstorm.service.DataGenerateStrategyService;
 import org.brainstorm.service.ExMetaData;
 import org.brainstorm.utils.JsonUtils;
-import org.hibernate.type.DateType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -109,7 +106,7 @@ public class ExMetaDataImpl implements ExMetaData {
 
     public void genColumnStrategy(Column column){
         DataType dataType = new DataType(column.getTypeName());
-        List<Strategy> strategyList = dataGenerateStrategyService.getAllSupportStrategy(dataType);
+        List<Strategy> strategyList = dataGenerateStrategyService.getAllSupportStrategy();
 
         Map<Integer, String> strategyMap = new HashMap<>();
 
