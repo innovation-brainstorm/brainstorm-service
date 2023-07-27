@@ -13,5 +13,5 @@ public interface DataGenerateStrategyService<T> {
 
     StrategyData generateData(Session session, Task task) throws SQLException, ClassNotFoundException;///
 
-    Strategy getSelectedStrategy(int id);
+    org.brainstorm.interfaces.strategyselect.Strategy getSelectedStrategy(int id);
 }

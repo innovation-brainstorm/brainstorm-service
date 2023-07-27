@@ -1,11 +1,7 @@
 package org.brainstorm.service.impl;
 
 import lombok.AllArgsConstructor;
-import org.brainstorm.interfaces.strategy.Strategy;
-import org.brainstorm.interfaces.strategy.impl.IncrementalListDataGenerateStrategyImpl;
-import org.brainstorm.interfaces.strategy.impl.NumberListDataGenerateStrategyImpl;
-import org.brainstorm.interfaces.strategy.impl.RandomSelectionDataGenerateStrategyImpl;
-import org.brainstorm.interfaces.strategy.impl.SpecificValueDataGenerateStrategyImpl;
+import org.brainstorm.interfaces.strategyselect.Strategy;
 import org.brainstorm.interfaces.strategyselect.impl.Incremental;
 import org.brainstorm.interfaces.strategyselect.impl.randomselect;
 import org.brainstorm.model.Session;
@@ -30,8 +26,8 @@ public class DataGenerateStrategyServiceImpl<T> implements DataGenerateStrategyS
     @Override
     public List<Strategy> getAllSupportStrategy() {
         List<Strategy> strategyList = new ArrayList<>();
-        strategyList.add((Strategy) incremental);
-        strategyList.add((Strategy) randomselect);
+        strategyList.add(incremental);
+        strategyList.add(randomselect);
         return strategyList;
     }
 
@@ -39,7 +35,7 @@ public class DataGenerateStrategyServiceImpl<T> implements DataGenerateStrategyS
     public StrategyData generateData(Session session, Task task) throws SQLException, ClassNotFoundException {
         int id = task.getStrategy();
         StrategyData strategyData = new StrategyData();
-        if (id > 4 || id < 0)
+        if (id > 2 || id < 0)
             return strategyData;
         List<String> resultSet = null;
         switch (id) {
@@ -66,17 +62,12 @@ public class DataGenerateStrategyServiceImpl<T> implements DataGenerateStrategyS
         Strategy strategy = null;
         switch (id) {
             case 1:
-                strategy = new IncrementalListDataGenerateStrategyImpl();
+                strategy = incremental;
                 break;
             case 2:
-                strategy = new NumberListDataGenerateStrategyImpl();
+                strategy = randomselect;
                 break;
-            case 3:
-                strategy = new RandomSelectionDataGenerateStrategyImpl();
-                break;
-            case 4:
-                strategy = new SpecificValueDataGenerateStrategyImpl();
-                break;
+
         }
         return strategy;
     }
