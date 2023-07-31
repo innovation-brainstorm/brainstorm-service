@@ -23,6 +23,9 @@ public class Incremental implements Strategy {
 
     @Override
     public List<String> dataselected(String column, String table, long quantity) throws SQLException {
+        //garantee the number is smaller than the column size
+        int max_quantity= valueFromTPDB.getColumnsize(table,column);
+        quantity=Math.min(max_quantity,quantity);
         String statement=String.format("select %s from (select %s from %s ORDER BY RAND() limit %d) as tab order by %s"
                 ,column, column,table,quantity,column);
         return valueFromTPDB.selectDataByStatement(statement);

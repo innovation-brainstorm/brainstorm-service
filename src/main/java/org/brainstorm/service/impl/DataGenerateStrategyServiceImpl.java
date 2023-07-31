@@ -17,7 +17,7 @@ import java.util.List;
 
 @Service
 @AllArgsConstructor
-public class DataGenerateStrategyServiceImpl<T> implements DataGenerateStrategyService {
+public class DataGenerateStrategyServiceImpl implements DataGenerateStrategyService {
     @Autowired
     Incremental incremental;
     @Autowired
@@ -32,7 +32,7 @@ public class DataGenerateStrategyServiceImpl<T> implements DataGenerateStrategyS
     }
 
     @Override
-    public StrategyData generateData(Session session, Task task) throws SQLException, ClassNotFoundException {
+    public StrategyData generateData(Session session, Task task) throws SQLException, RuntimeException {
         int id = task.getStrategy();
         StrategyData strategyData = new StrategyData();
         if (id > 2 || id < 0)

@@ -24,6 +24,8 @@ public class randomselect implements Strategy {
 
     @Override
     public List<String> dataselected(String column, String table, long quantity) throws SQLException {
+        int max_quantity= valueFromTPDB.getColumnsize(table,column);
+        quantity=Math.min(max_quantity,quantity);
         String statement = String.format("select %s from %s ORDER BY RAND() limit %d", column, table,quantity);
         return valueFromTPDB.selectDataByStatement(statement);
     }

@@ -94,13 +94,17 @@ public class SessionStatusServiceImpl implements SessionStatusService {
 
         executor.execute(() -> {
             try {
+                log.info("start generateData");
                 StrategyData strategyData = strategyService.generateData(session,task);
+                log.info(" generateData done");
                 String filePath = ROOT_DIR + File.separator + session.getDirectory() + File.separator + task.getFileName();
                 populateValueInFile(filePath, Arrays.asList(task.getColumnName()), true);
                 populateValueInFile(filePath, strategyData.getData(), false);
 
                 task.setStatus(Status.COMPLETED);
+                log.info("start update task.");
                 updateTask(task);
+                log.info("update task done.");
             } catch (Exception e) {
                 log.error("taskId: {} generate data failed, failed reason: {}", task.getId(), e.getMessage());
                 task.setStatus(Status.ERROR);

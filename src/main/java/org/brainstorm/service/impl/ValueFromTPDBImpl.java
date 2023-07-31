@@ -24,6 +24,7 @@ public class ValueFromTPDBImpl implements ValueFromTPDB {
         connection = DriverManager.getConnection(conInfo.getUrl(), conInfo.getUsername(), conInfo.getPassword());
     }
 
+
     @Override
     public List<String> getDataByColumnMySQL(String table, String column, int start, int end) throws SQLException {
         ArrayList<String> res = new ArrayList<>();
@@ -38,7 +39,7 @@ public class ValueFromTPDBImpl implements ValueFromTPDB {
     }
 
     @Override
-    public List<String> selectDataByStatement(String statement) throws SQLException {
+    public List<String> selectDataByStatement(String statement) throws SQLException,RuntimeException {
         ArrayList<String> res = new ArrayList<>();
         try (Statement stat = connection.createStatement()) {
             ResultSet resultSet = stat.executeQuery(statement);
@@ -48,6 +49,15 @@ public class ValueFromTPDBImpl implements ValueFromTPDB {
             }
         }
         return res;
+    }
+
+    @Override
+    public int getColumnsize(String tableName,String column) throws SQLException,RuntimeException {
+        try (Statement stat = connection.createStatement()) {
+            ResultSet resultSet = stat.executeQuery(String.format("select count(%s) from %s", column,tableName));
+            resultSet.next();
+            return resultSet.getInt(1);
+        }
     }
 
     @Override
