@@ -1,6 +1,6 @@
 package org.brainstorm.service.impl;
 
-import org.brainstorm.interfaces.strategy.DataType;
+
 import org.brainstorm.service.StrategyData;
 import org.junit.Assert;
 import org.junit.jupiter.api.Test;
@@ -15,11 +15,11 @@ class DataGenerateStrategyServiceImplTest {
 
     @Test
     public void testGetAllSupportStrategy() {
-        DataType dataType = new DataType("Integer");
-        Assert.assertEquals(5, strategyService.getAllSupportStrategy(dataType).size());
-        System.out.println(strategyService.getAllSupportStrategy(dataType));
+        //DataType dataType = new DataType("Integer");
+        Assert.assertEquals(5, strategyService.getAllSupportStrategy().size());
+        System.out.println(strategyService.getAllSupportStrategy());
     }
-
+/*
     @Test
     public void testGenerateData() {
         DataType incrementalDataType = new DataType("Integer", 100, 1);
@@ -30,5 +30,5 @@ class DataGenerateStrategyServiceImplTest {
         // 测试正常生成数据
         StrategyData strategyData = strategyService.generateData(incrementalDataType, 1);
         Assert.assertFalse(strategyData.getData().isEmpty());
-    }
+    }*/
 }

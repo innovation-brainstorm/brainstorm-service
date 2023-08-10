@@ -5,9 +5,7 @@ import net.minidev.json.JSONObject;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.brainstorm.instant.Status;
-import org.brainstorm.interfaces.strategy.DataType;
-import org.brainstorm.interfaces.strategy.DefaultDataType;
-import org.brainstorm.interfaces.strategy.StrategyEnums;
+
 import org.brainstorm.model.MODE;
 import org.brainstorm.model.Session;
 import org.brainstorm.model.Task;
@@ -91,18 +89,22 @@ public class SessionStatusServiceImpl implements SessionStatusService {
     }
 
     private void startTask(Session session, Task task) {
-        DataType defaultDataType = DefaultDataType.getDefaultDataType(StrategyEnums.values()[task.getStrategy()], (int) session.getExpectedCount());
+        //DataType defaultDataType = DefaultDataType.getDefaultDataType(StrategyEnums.values()[task.getStrategy()], (int) session.getExpectedCount());
         task.setStatus(Status.RUNNING);
 
         executor.execute(() -> {
             try {
-                StrategyData strategyData = strategyService.generateData(defaultDataType, task.getStrategy());
+                log.info("start generateData");
+                StrategyData strategyData = strategyService.generateData(session,task);
+                log.info(" generateData done");
                 String filePath = ROOT_DIR + File.separator + session.getDirectory() + File.separator + task.getFileName();
                 populateValueInFile(filePath, Arrays.asList(task.getColumnName()), true);
                 populateValueInFile(filePath, strategyData.getData(), false);
 
                 task.setStatus(Status.COMPLETED);
+                log.info("start update task.");
                 updateTask(task);
+                log.info("update task done.");
             } catch (Exception e) {
                 log.error("taskId: {} generate data failed, failed reason: {}", task.getId(), e.getMessage());
                 task.setStatus(Status.ERROR);
@@ -118,7 +120,10 @@ public class SessionStatusServiceImpl implements SessionStatusService {
 
         String path = ROOT_DIR + File.separator + session.getDirectory() + File.separator + "learning" + File.separator + task.getFileName();
         try {
-            if(!task.isPretrained()) generateLearningData(session.getTableName(), task.getColumnName(), path);
+            if(!task.isPretrained()) {
+                generateLearningData(session.getTableName(), task.getColumnName(), path);
+            }
+
         } catch (Exception e) {
             task.setStatus(Status.ERROR);
             return;
@@ -136,6 +141,7 @@ public class SessionStatusServiceImpl implements SessionStatusService {
         HttpEntity<String> request = new HttpEntity<>(taskInfo.toString(), headers);
 
         log.info("columnName: {}, call ML service...", task.getColumnName());
+        //请求ml server
         ResponseEntity<TaskResponseDto> responseEntity = restTemplate.postForEntity(AI_CREATE_TASK_URL, request, TaskResponseDto.class);
         if (HttpStatus.OK == responseEntity.getStatusCode()) {
             log.info("columnName: {}, ML service responded with OK.", task.getColumnName());
@@ -180,6 +186,7 @@ public class SessionStatusServiceImpl implements SessionStatusService {
 
         //set session completed when all tasks are completed.
         if (Status.COMPLETED == savedTask.getStatus()) {
+            //evert time complete a task,reset the currenthashmap value-1,and when zero,save session
             if (sessionId2unfinishedTasks.computeIfPresent(session.getId(), (k, v) -> --v) == 0) {
                 try {
                     generateTestFile(session);

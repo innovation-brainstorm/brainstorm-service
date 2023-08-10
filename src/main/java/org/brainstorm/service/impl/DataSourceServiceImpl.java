@@ -2,8 +2,8 @@ package org.brainstorm.service.impl;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.brainstorm.datasource.modle.*;
 import org.brainstorm.datasource.modle.Record;
+import org.brainstorm.datasource.modle.*;
 import org.brainstorm.service.DataSourceService;
 import org.brainstorm.utils.JdbcUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,7 +42,7 @@ public class DataSourceServiceImpl implements DataSourceService {
 		List<Record> recordList = new ArrayList<>();
 		try {
 			connection = JdbcUtils.getConnection(dataSourceInfo.getUrl(), dataSourceInfo.getUsername(), dataSourceInfo.getPassword());
-			String sql = "SELECT * from "+ tableName + " LIMIT "+ dataSourceInfo.getMaxRows();
+			String sql = "SELECT * from "+ tableName + " LIMIT"+ dataSourceInfo.getMaxRows();
 			statement = connection.createStatement();
 			resultSet = statement.executeQuery(sql);
 
