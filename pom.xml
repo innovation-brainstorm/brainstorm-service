@@ -66,6 +66,7 @@
             <artifactId>modelmapper</artifactId>
             <version>3.1.1</version>
         </dependency>
+
         <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
@@ -80,6 +81,11 @@
             <groupId>net.minidev</groupId>
             <artifactId>json-smart</artifactId>
             <version>2.4.8</version>
+        </dependency>
+        <dependency>
+            <groupId>com.opencsv</groupId>
+            <artifactId>opencsv</artifactId>
+            <version>5.4</version>
         </dependency>
         <dependency>
             <groupId>commons-io</groupId>

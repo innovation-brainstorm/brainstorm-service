@@ -24,6 +24,7 @@ public class ValueFromTPDBImpl implements ValueFromTPDB {
     private DataSource userDataSource;
 
     @PostConstruct
+    //用于在autowire变量初始化后执行construct
     private void createUserDataSource() {
         DataBaseConnectionInfoDTO conInfo = new DataBaseConnectionInfoDTO();
         HikariConfig hikariConfig = new HikariConfig();
@@ -65,6 +66,29 @@ public class ValueFromTPDBImpl implements ValueFromTPDB {
         }
         return res;
     }
+    public List<String> getColumnNames(String tableName)throws SQLException,RuntimeException{
+        Connection connection = this.userDataSource.getConnection();
+        List<String> ColumnNames=new ArrayList<>();
+        try(Statement stat = connection.createStatement()){
+            ResultSet rs = stat.executeQuery(String.format("SELECT * FROM %s",tableName));
+            ResultSetMetaData columndata = rs.getMetaData();
+            DatabaseMetaData metaData = connection.getMetaData();
+            ResultSet primaryKeys = metaData.getPrimaryKeys(null, null, tableName);
+            primaryKeys.next();
+            String pk=primaryKeys.getString("COLUMN_NAME");
+
+            int columncount=columndata.getColumnCount();
+            for(int i=1;i<=columncount;i++){
+                String column_name=columndata.getColumnName(i);
+                if(!column_name.equals(pk)) {
+                    ColumnNames.add(column_name);
+                }
+            }
+            return ColumnNames;
+        }finally {
+            connection.close();
+        }
+    }
 
     @Override
     public int getColumnsize(String tableName,String column) throws SQLException,RuntimeException {
@@ -77,7 +101,6 @@ public class ValueFromTPDBImpl implements ValueFromTPDB {
             conn.close();
         }
     }
-
     @Override
     public void executeScript(String filePath) throws SQLException {
         FileSystemResource resource = new FileSystemResource(filePath);

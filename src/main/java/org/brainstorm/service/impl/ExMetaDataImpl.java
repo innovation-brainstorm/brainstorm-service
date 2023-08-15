@@ -23,6 +23,7 @@ import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.logging.Logger;
 
 @Service
 @Slf4j
@@ -71,11 +72,16 @@ public class ExMetaDataImpl implements ExMetaData {
                 if(column.getIsAutoincrement()) continue;
                 String specificModelId = modelId + "_" + userTableName + "_" + column.getColumnName();
                 column.setModelId(specificModelId);
-                ResponseEntity<Boolean> responseEntity = restTemplate.getForEntity(AI_CHECK_MODEL_URL, Boolean.class, specificModelId);
-                if (HttpStatus.OK == responseEntity.getStatusCode()) {
-                    Boolean body = responseEntity.getBody();
-                    column.setPretrained(body);
+                try {
+                    ResponseEntity<Boolean> responseEntity = restTemplate.getForEntity(AI_CHECK_MODEL_URL, Boolean.class, specificModelId);
+                    if (HttpStatus.OK == responseEntity.getStatusCode()) {
+                        Boolean body = responseEntity.getBody();
+                        column.setPretrained(body);
+                    }
+                }catch (Exception e){
+                    log.error("getPostFor AI_CHECK_MODEL_URL failed.Failed reason:{}",e.getMessage());
                 }
+
             }
         }
 
@@ -110,6 +116,7 @@ public class ExMetaDataImpl implements ExMetaData {
 
         Map<Integer, String> strategyMap = new HashMap<>();
         strategyMap.put(0,"AImodel");
+        strategyMap.put(3,"customer_shell");
         strategyList.forEach(strategy -> {
             Integer id = strategy.getIdentifier();
             String name = strategy.getStrategyName();

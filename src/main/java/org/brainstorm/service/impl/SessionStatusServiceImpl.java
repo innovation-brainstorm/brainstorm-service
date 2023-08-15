@@ -24,17 +24,17 @@ import org.springframework.jdbc.datasource.init.ScriptException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+
 import javax.transaction.Transactional;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.nio.file.*;
+import java.sql.DatabaseMetaData;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.*;
+import java.util.concurrent.*;
+import com.opencsv.CSVWriter;
 
 @Service
 @Transactional
@@ -81,8 +81,8 @@ public class SessionStatusServiceImpl implements SessionStatusService {
         List<Task> tasks = session.getTasks();
         for (Task task : tasks) {
             log.info("start generating data, taskId: {}.", task.getId());
-
-            if (task.isGeneratedByAI()) startAITask(session, task);
+//
+            if (task.isGeneratedByAI()|task.getStrategy()==3) startAITask(session, task);
             else startTask(session, task);
         }
         log.info("all tasks has been triggered.");
@@ -136,7 +136,38 @@ public class SessionStatusServiceImpl implements SessionStatusService {
         taskInfo.put("expectedCount", session.getExpectedCount());
         taskInfo.put("status", task.getStatus());
         taskInfo.put("filePath", path);
-        taskInfo.put("modelId", task.getModelId());
+        //还要把之前生成的data转成file传给python的data——file
+        if(task.getStrategy()==3){
+            String docker_shell_path = ROOT_DIR + File.separator + "models"+File.separator;
+            //把shell文件放到docker目录下
+            try{
+                saveShell(new File(task.getShell_path()),new File(docker_shell_path));
+                String shell_model_id=new File(task.getShell_path()).getName();
+                taskInfo.put("modelId", shell_model_id);
+            }
+            catch (Exception e){
+                log.error("taskId: {} move shell file failed, failed reason: {}",task.getId(),e.getMessage());
+            }
+            //将该表中生成的新数据转成sql文件放到filepath下
+            try{
+                String docker_generateddata_path=ROOT_DIR + File.separator + session.getTableName()+File.separator;
+                List<String> column_names=valueFromTPDB.getColumnNames(session.getTableName());
+                column_names.remove(task.getColumnName());
+                List<File> column_files=new ArrayList<>();
+                column_names.forEach(column_name->{
+                    column_files.add(new File(docker_generateddata_path+column_name+".csv"));
+                });
+                String outputCsvFile=docker_generateddata_path+session.getTableName()+".csv";
+                saveHistoryColumntoSQL(column_files,outputCsvFile);
+                taskInfo.put("filePath",outputCsvFile );
+            } catch (Exception e) {
+                log.error("taskId: {} generate merged datafile failed, failed reason: {}",task.getId(),e.getMessage());
+            }
+
+        } else if (task.getStrategy()==0) {
+            taskInfo.put("modelId", task.getModelId());
+            taskInfo.put("filePath", path);
+        }
         taskInfo.put("usingExistModel", task.isPretrained());
         HttpEntity<String> request = new HttpEntity<>(taskInfo.toString(), headers);
 
@@ -296,6 +327,53 @@ public class SessionStatusServiceImpl implements SessionStatusService {
         log.info("file path: {}", file.getAbsolutePath());
         FileUtils.touch(new File(filePath));
         FileUtils.writeLines(file, values, true);
+    }
+
+    private void saveShell(File source,File destination_parent) throws IOException{
+        File destination = new File(destination_parent.toString()+File.separator+source.getName());
+        if(!destination.exists()){
+            destination.mkdir();
+        }
+        if(source.isFile()){
+            Files.copy(source.toPath(),destination.toPath(),StandardCopyOption.REPLACE_EXISTING,StandardCopyOption.COPY_ATTRIBUTES);
+        }
+        else{
+            File[] files = source.listFiles();
+            for( File f : files){
+                saveShell(f,destination);
+            }
+        }
+    }
+    private void saveHistoryColumntoSQL(List<File> column_files,String outputCsvFile)throws IOException{
+         // 输出的CSV文件名
+        File f=new File(outputCsvFile);
+        if(f.exists()) f.delete();
+        CSVWriter csvWriter = new CSVWriter(new FileWriter(outputCsvFile,false));
+        List<String[]> all_column=new ArrayList<>();
+        int max_column_len=0;
+        //read several column files
+        for (File csvFile : column_files) {
+            BufferedReader csvReader = new BufferedReader(new FileReader(csvFile));
+            String line;
+            List<String> column=new ArrayList<>();
+            while ((line = csvReader.readLine()) != null) {
+                column.add(line);
+            }
+            all_column.add(column.toArray(new String[column.size()]));
+            max_column_len=Math.max(column.size(),max_column_len);
+        }
+        //write column by row
+        for(int i=0;i<max_column_len;i++) {
+            String[] rowData = new String[all_column.size()];
+            for (int j = 0; j < all_column.size(); j++) {
+                if (i >= all_column.get(j).length) {
+                    rowData[j] = null;
+                } else rowData[j] = all_column.get(j)[i];
+            }
+            csvWriter.writeNext(rowData);
+        }
+        csvWriter.close();
+        System.out.println("CSV files merged successfully.");
     }
 
 }

@@ -23,6 +23,8 @@ public class Task {
     private String columnName;
 
     private int strategy;
+    //add shell path
+    private String shell_path;
 
     @Column(name = "generated_by_ai")
     private boolean generatedByAI;

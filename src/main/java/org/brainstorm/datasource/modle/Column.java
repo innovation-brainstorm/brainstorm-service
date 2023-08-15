@@ -39,7 +39,7 @@ public class Column extends BaseColumn {
    private String modelId;
 
    private Map<Integer,String> Strategies;
-
+   private String shell_path;
 
 //    DECIMAL_DIGITS:null
 //    NUM_PREC_RADIX:10
