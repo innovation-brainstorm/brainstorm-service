@@ -35,6 +35,7 @@ import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.*;
 import com.opencsv.CSVWriter;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @Transactional
@@ -79,11 +80,23 @@ public class SessionStatusServiceImpl implements SessionStatusService {
         session.setStatus(Status.RUNNING);
 
         List<Task> tasks = session.getTasks();
+        List<Task> call_AI_task=new ArrayList<>();
         for (Task task : tasks) {
-            log.info("start generating data, taskId: {}.", task.getId());
-//
-            if (task.isGeneratedByAI()|task.getStrategy()==3) startAITask(session, task);
-            else startTask(session, task);
+            if (task.isGeneratedByAI()|task.getStrategy()==3) {
+                call_AI_task.add(task);
+                //startAITask(session, task);
+            }
+            else {
+                log.info("start generating data,not AI server taskId: {}.", task.getId());
+                startTask(session, task);
+            }
+        }
+        /*先处理不需要python ai server的task，再处理需要ai sever的task。
+        目的是当需要用到customer_model的时候，需要先把其他column的数据都拿到，传给用户，再执行用户的shell脚本。
+        所以需要先将其他的column先生成完毕，最后再执行customer_model的task*/
+        for(Task AI_task :call_AI_task){
+            log.info("start generating data, AI server taskId: {}.", AI_task.getId());
+            startAITask(session,AI_task);
         }
         log.info("all tasks has been triggered.");
     }
@@ -135,20 +148,21 @@ public class SessionStatusServiceImpl implements SessionStatusService {
         taskInfo.put("columnName", task.getColumnName());
         taskInfo.put("expectedCount", session.getExpectedCount());
         taskInfo.put("status", task.getStatus());
-        taskInfo.put("filePath", path);
-        //还要把之前生成的data转成file传给python的data——file
+        //taskInfo.put("filePath", path);
+
         if(task.getStrategy()==3){
-            String docker_shell_path = ROOT_DIR + File.separator + "models"+File.separator;
-            //把shell文件放到docker目录下
+            taskInfo.put("usingExistModel", true);
+            String docker_shell_path = ROOT_DIR + File.separator + "models"+File.separator+"customer_model";
+            //把shell文件放到docker目录下，并添加相应的taskInfo
             try{
-                saveShell(new File(task.getShell_path()),new File(docker_shell_path));
-                String shell_model_id=new File(task.getShell_path()).getName();
+                saveShell(task.getShellfile(),new File(docker_shell_path));
+                String shell_model_id=new File(docker_shell_path).getName();
                 taskInfo.put("modelId", shell_model_id);
             }
             catch (Exception e){
                 log.error("taskId: {} move shell file failed, failed reason: {}",task.getId(),e.getMessage());
             }
-            //将该表中生成的新数据转成sql文件放到filepath下
+            //将该表中其他column所生成的新数据合并成一个sql文件，放到filepath下，并添加对应的taskInfo
             try{
                 String docker_generateddata_path=ROOT_DIR + File.separator + session.getTableName()+File.separator;
                 List<String> column_names=valueFromTPDB.getColumnNames(session.getTableName());
@@ -167,8 +181,9 @@ public class SessionStatusServiceImpl implements SessionStatusService {
         } else if (task.getStrategy()==0) {
             taskInfo.put("modelId", task.getModelId());
             taskInfo.put("filePath", path);
+            taskInfo.put("usingExistModel", task.isPretrained());
         }
-        taskInfo.put("usingExistModel", task.isPretrained());
+
         HttpEntity<String> request = new HttpEntity<>(taskInfo.toString(), headers);
 
         log.info("columnName: {}, call ML service...", task.getColumnName());
@@ -329,25 +344,25 @@ public class SessionStatusServiceImpl implements SessionStatusService {
         FileUtils.writeLines(file, values, true);
     }
 
-    private void saveShell(File source,File destination_parent) throws IOException{
-        File destination = new File(destination_parent.toString()+File.separator+source.getName());
-        if(!destination.exists()){
-            destination.mkdir();
+    private void saveShell(byte[] shell_file, File destination_parent) throws IOException{
+        if(!destination_parent.exists()){
+            destination_parent.mkdirs();
         }
-        if(source.isFile()){
-            Files.copy(source.toPath(),destination.toPath(),StandardCopyOption.REPLACE_EXISTING,StandardCopyOption.COPY_ATTRIBUTES);
+        File shell_destination = new File(destination_parent.toString()+File.separator+"main.sh");
+        shell_destination.createNewFile();
+        try (FileOutputStream fos = new FileOutputStream(shell_destination, false)) {
+            fos.write(shell_file);
         }
-        else{
-            File[] files = source.listFiles();
-            for( File f : files){
-                saveShell(f,destination);
-            }
+        File modeltype_destination = new File(destination_parent.toString()+File.separator+"model_type.txt");
+        try (FileOutputStream fos = new FileOutputStream(modeltype_destination, false)) {
+            fos.write("CUSTOM".getBytes());
         }
+
     }
     private void saveHistoryColumntoSQL(List<File> column_files,String outputCsvFile)throws IOException{
          // 输出的CSV文件名
         File f=new File(outputCsvFile);
-        if(f.exists()) f.delete();
+        if (f.exists()) f.delete();
         CSVWriter csvWriter = new CSVWriter(new FileWriter(outputCsvFile,false));
         List<String[]> all_column=new ArrayList<>();
         int max_column_len=0;

@@ -3,7 +3,6 @@ package org.brainstorm.controller;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.brainstorm.instant.Status;
-import org.brainstorm.model.MODE;
 import org.brainstorm.model.Session;
 import org.brainstorm.model.Task;
 import org.brainstorm.model.dto.*;
@@ -18,11 +17,13 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 
 @RestController
 @Slf4j
@@ -32,7 +33,8 @@ public class SessionStatusController {
 
     @Autowired
     private SessionStatusService sessionStatusService;
-
+    //just a testdemo,无法多线程。后面需要的改动：前端需要将shellfile和sessionid传过来，后端分开两部分把shellfile和json分别写进同一个session entity里
+    private  List<byte[]> shellFiles=new ArrayList<>();
     @GetMapping("/session/getStatus/{id}")
     public ResponseDto<Status> getSessionStatus(@PathVariable Long id) {
         Status status = sessionStatusService.getSessionById(id).getStatus();
@@ -50,14 +52,39 @@ public class SessionStatusController {
     }
 
     @PostMapping("/session/generatedData")
-    public ResponseDto<Session> generatedData(@RequestBody NewSessionDto newSessionDto) {
-        Session session = sessionStatusService.createSessionWithTasks(DtoToEntity.convertToSession(newSessionDto));
-        log.info("session and tasks created.");
+    public ResponseDto<Session> generatedData( @RequestBody NewSessionDto newSessionDto)  {
+            this.shellFiles.remove(0);
+        //HttpServletRequest request, @ModelAttribute NewSessionDto newSessionDto
+            Session session=sessionStatusService.createSessionWithTasks(DtoToEntity.convertToSession(newSessionDto,this.shellFiles));
+            log.info("session and tasks created.");
 
-        sessionStatusService.triggerTasks(session);
-        log.info("start generating data....");
+            sessionStatusService.triggerTasks(session);
+            log.info("start generating data....");
 
-        return new ResponseDto<>(true, session);
+            return new ResponseDto<>(true, session);
+    }
+    @PostMapping("/session/receiveShellFiles")
+    public synchronized ResponseDto receiveShellFiles(MultipartHttpServletRequest request){
+        try {
+            this.shellFiles.clear();
+            // Get the files and form fields from the multipart request
+            Iterator<String> fileNames = request.getFileNames();
+            while (fileNames.hasNext()) {
+                String fileName = fileNames.next();
+                List<MultipartFile> file = request.getFiles(fileName);
+                file.forEach(f-> {
+                    try {
+                        this.shellFiles.add(f.getBytes());
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+            }
+            return new ResponseDto<>(true, null);
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @PostMapping("/session/insert/{id}")

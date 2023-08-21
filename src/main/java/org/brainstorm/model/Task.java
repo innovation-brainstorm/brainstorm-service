@@ -5,8 +5,10 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.brainstorm.instant.Status;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.persistence.*;
+import java.io.File;
 
 @Data
 @NoArgsConstructor
@@ -23,8 +25,9 @@ public class Task {
     private String columnName;
 
     private int strategy;
-    //add shell path
-    private String shell_path;
+    //add shell file
+    @Lob
+    private byte[] shellfile;
 
     @Column(name = "generated_by_ai")
     private boolean generatedByAI;
