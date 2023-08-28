@@ -1,51 +1,60 @@
 package org.brainstorm.service.impl;
 
 import lombok.AllArgsConstructor;
-import org.brainstorm.interfaces.strategy.DataType;
-import org.brainstorm.interfaces.strategy.Strategy;
-import org.brainstorm.interfaces.strategy.StrategyEnums;
-import org.brainstorm.interfaces.strategy.impl.*;
+import org.brainstorm.interfaces.strategyselect.Strategy;
+import org.brainstorm.interfaces.strategyselect.impl.Incremental;
+import org.brainstorm.interfaces.strategyselect.impl.randomselect;
+import org.brainstorm.model.Session;
+import org.brainstorm.model.Task;
 import org.brainstorm.service.DataGenerateStrategyService;
 import org.brainstorm.service.StrategyData;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 @Service
 @AllArgsConstructor
-public class DataGenerateStrategyServiceImpl<T> implements DataGenerateStrategyService {
+public class DataGenerateStrategyServiceImpl implements DataGenerateStrategyService {
+    @Autowired
+    Incremental incremental;
+    @Autowired
+    randomselect randomselect;
 
     @Override
-    public List<Strategy> getAllSupportStrategy(DataType dataType) {
-        List<Strategy> strategyList = Arrays.asList(
-                new IncrementalListDataGenerateStrategyImpl(),
-                new NumberListDataGenerateStrategyImpl(),
-                new RandomSelectionDataGenerateStrategyImpl(),
-                new SpecificValueDataGenerateStrategyImpl(),
-                new AIDataGenerateStrategyImpl()
-        );
-        List<Strategy> allSupportDataGenerateStrategyList = new ArrayList<>();
-        strategyList.forEach(e -> {
-            if (e.canSupport(dataType)) {
-                allSupportDataGenerateStrategyList.add(e);
-            }
-        });
-        return allSupportDataGenerateStrategyList;
+    public List<Strategy> getAllSupportStrategy() {
+        List<Strategy> strategyList = new ArrayList<>();
+        strategyList.add(incremental);
+        strategyList.add(randomselect);
+        return strategyList;
     }
 
     @Override
-    public StrategyData generateData(DataType dataType, int id) {
-        if (id > 4 || id < 0)
-            return new StrategyData();
-        Strategy strategy = StrategyEnums.values()[id].getStrategy();
-        System.out.println(strategy);
-        List<T> generate = strategy.generate(dataType);
-
+    public StrategyData generateData(Session session, Task task) throws SQLException, RuntimeException {
+        int id = task.getStrategy();
         StrategyData strategyData = new StrategyData();
-        strategyData.setData(generate);// add data to strategyData
+        if (id > 2 || id < 0)
+            return strategyData;
+        List<String> resultSet = null;
+        switch (id) {
+            case (1):
+                resultSet = incremental.dataselected(task.getColumnName(), session.getTableName(), session.getExpectedCount());
+                break;
+            case (2):
+                resultSet = randomselect.dataselected(task.getColumnName(), session.getTableName(), session.getExpectedCount());
+                break;
+        }
+        strategyData.setData(resultSet);
         return strategyData;
+        //        Strategy strategy = StrategyEnums.values()[id].getStrategy();
+//        System.out.println(strategy);
+//        List<T> generate = strategy.generate();
+//
+//        StrategyData strategyData = new StrategyData();
+//        strategyData.setData(generate);// add data to strategyData
+//        return strategyData;
     }
 
     @Override
@@ -53,17 +62,12 @@ public class DataGenerateStrategyServiceImpl<T> implements DataGenerateStrategyS
         Strategy strategy = null;
         switch (id) {
             case 1:
-                strategy = new IncrementalListDataGenerateStrategyImpl();
+                strategy = incremental;
                 break;
             case 2:
-                strategy = new NumberListDataGenerateStrategyImpl();
+                strategy = randomselect;
                 break;
-            case 3:
-                strategy = new RandomSelectionDataGenerateStrategyImpl();
-                break;
-            case 4:
-                strategy = new SpecificValueDataGenerateStrategyImpl();
-                break;
+
         }
         return strategy;
     }
